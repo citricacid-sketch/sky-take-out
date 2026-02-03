@@ -61,6 +61,12 @@ public class EmployeeController {
 
         return Result.success(employeeLoginVO);
     }
+    /**
+     * 新增员工
+     *
+     * @param employeeDTO
+     * @return
+     */
 
     @PostMapping
     @ApiOperation("新增员工")
@@ -69,12 +75,32 @@ public class EmployeeController {
         employeeService.save(employeeDTO);
         return Result.success();
     }
+    /**
+     * 分页查询
+     * 查询类加泛型
+     * @param employeePageQueryDTO
+     * @return
+     */
     @GetMapping("/page")
     @ApiOperation("分页查询")
     public Result<PageResult> page( EmployeePageQueryDTO employeePageQueryDTO){
         log.info("分页查询员工数据：{}", employeePageQueryDTO);
         PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);
         return Result.success(pageResult);
+    }
+
+    /**
+     * 启用禁用员工账号
+     *
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result startOrStop(@PathVariable Integer status, Long id){
+        log.info("员工状态：{}，员工id：{}", status, id);
+        employeeService.startOrStop(status, id);
+        return Result.success();
     }
     /**
      * 退出
