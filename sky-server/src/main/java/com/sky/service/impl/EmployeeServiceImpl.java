@@ -58,7 +58,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
 
-        if (employee.getStatus() .equals(StatusConstant.DISABLE)){
+        if (employee.getStatus().equals(StatusConstant.DISABLE)) {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
@@ -69,6 +69,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     /**
      * 新增员工
+     *
      * @param employeeDTO
      */
     @Override
@@ -88,17 +89,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setUpdateTime(LocalDateTime.now());
 
         //设置当前记录创建人id和修改人id
-        employee.setCreateUser(BaseContext.getCurrentId());//使用BaseContext工具类获取当前登录用户的id
+        //使用BaseContext工具类获取当前登录用户的id
+        employee.setCreateUser(BaseContext.getCurrentId());
         employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(employee);
-
 
 
     }
 
     /**
      * 分页查询
+     *
      * @param employeePageQueryDTO
      * @return
      */
@@ -118,16 +120,46 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     /**
      * 启用禁用员工账号
+     *
      * @param status
      * @param id
      */
-
     @Override
     public void startOrStop(Integer status, Long id) {
         Employee employee = Employee.builder()
                 .status(status)
                 .id(id)
                 .build();
+        employeeMapper.update(employee);
+    }
+
+    /**
+     * 根据id查询员工信息
+     *
+     * @param id
+     * @return employee
+     */
+    @Override
+    public Employee getById(Long id) {
+        Employee employee = employeeMapper.getById(id);
+
+        //对密码进行隐藏
+        employee.setPassword("****");
+        return employee;
+    }
+
+    /**
+     * 编辑员工信息
+     *
+     * @param employeeDTO
+     */
+    @Override
+    public void update(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        employee.setPassword(null);
         employeeMapper.update(employee);
     }
 
