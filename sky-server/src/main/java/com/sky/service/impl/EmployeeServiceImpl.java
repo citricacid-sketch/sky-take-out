@@ -2,6 +2,7 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.annotation.AutoFill;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
@@ -11,6 +12,7 @@ import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.dto.PasswordEditDTO;
 import com.sky.entity.Employee;
+import com.sky.enumeration.OperationType;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
@@ -75,6 +77,7 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @param employeeDTO
      */
     @Override
+    @AutoFill(value = OperationType.INSERT)
     public void save(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         //对象属性拷贝
@@ -86,14 +89,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         //设置密码(新增员工密码默认为123456)
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
 
-        //设置当前记录的创建时间和修改时间
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-
-        //设置当前记录创建人id和修改人id
-        //使用BaseContext工具类获取当前登录用户的id
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+        ////设置当前记录的创建时间和修改时间
+        //employee.setCreateTime(LocalDateTime.now());
+        //employee.setUpdateTime(LocalDateTime.now());
+        //
+        ////设置当前记录创建人id和修改人id
+        ////使用BaseContext工具类获取当前登录用户的id
+        //employee.setCreateUser(BaseContext.getCurrentId());
+        //employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(employee);
 
@@ -156,11 +159,10 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @param employeeDTO
      */
     @Override
+    @AutoFill(value = OperationType.UPDATE)
     public void update(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser(BaseContext.getCurrentId());
         employee.setPassword(null);
         employeeMapper.update(employee);
     }

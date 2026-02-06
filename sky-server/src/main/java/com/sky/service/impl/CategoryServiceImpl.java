@@ -2,12 +2,14 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.annotation.AutoFill;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
+import com.sky.enumeration.OperationType;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishMapper;
@@ -39,6 +41,8 @@ public class CategoryServiceImpl implements CategoryService {
      * 新增分类
      * @param categoryDTO
      */
+    @Override
+    @AutoFill(value = OperationType.INSERT)
     public void save(CategoryDTO categoryDTO) {
         Category category = new Category();
         //属性拷贝
@@ -48,10 +52,10 @@ public class CategoryServiceImpl implements CategoryService {
         category.setStatus(StatusConstant.DISABLE);
 
         //设置创建时间、修改时间、创建人、修改人
-        category.setCreateTime(LocalDateTime.now());
-        category.setUpdateTime(LocalDateTime.now());
-        category.setCreateUser(BaseContext.getCurrentId());
-        category.setUpdateUser(BaseContext.getCurrentId());
+        //category.setCreateTime(LocalDateTime.now());
+        //category.setUpdateTime(LocalDateTime.now());
+        //category.setCreateUser(BaseContext.getCurrentId());
+        //category.setUpdateUser(BaseContext.getCurrentId());
 
         categoryMapper.insert(category);
     }
@@ -61,6 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @param categoryPageQueryDTO
      * @return
      */
+    @Override
     public PageResult pageQuery(CategoryPageQueryDTO categoryPageQueryDTO) {
         PageHelper.startPage(categoryPageQueryDTO.getPage(),categoryPageQueryDTO.getPageSize());
         //下一条sql进行分页，自动加入limit关键字分页
@@ -72,6 +77,7 @@ public class CategoryServiceImpl implements CategoryService {
      * 根据id删除分类
      * @param id
      */
+    @Override
     public void deleteById(Long id) {
         //查询当前分类是否关联了菜品，如果关联了就抛出业务异常
         Integer count = dishMapper.countByCategoryId(id);
@@ -95,13 +101,15 @@ public class CategoryServiceImpl implements CategoryService {
      * 修改分类
      * @param categoryDTO
      */
+    @Override
+    @AutoFill(value = OperationType.UPDATE)
     public void update(CategoryDTO categoryDTO) {
         Category category = new Category();
         BeanUtils.copyProperties(categoryDTO,category);
 
         //设置修改时间、修改人
-        category.setUpdateTime(LocalDateTime.now());
-        category.setUpdateUser(BaseContext.getCurrentId());
+        //category.setUpdateTime(LocalDateTime.now());
+        //category.setUpdateUser(BaseContext.getCurrentId());
 
         categoryMapper.update(category);
     }
@@ -111,12 +119,14 @@ public class CategoryServiceImpl implements CategoryService {
      * @param status
      * @param id
      */
+    @AutoFill(value = OperationType.UPDATE)
+    @Override
     public void startOrStop(Integer status, Long id) {
         Category category = Category.builder()
                 .id(id)
                 .status(status)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
+                //.updateTime(LocalDateTime.now())
+                //.updateUser(BaseContext.getCurrentId())
                 .build();
         categoryMapper.update(category);
     }
@@ -126,6 +136,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @param type
      * @return
      */
+    @Override
     public List<Category> list(Integer type) {
         return categoryMapper.list(type);
     }
