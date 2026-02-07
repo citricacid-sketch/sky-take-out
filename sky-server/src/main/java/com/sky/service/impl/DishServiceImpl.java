@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.annotation.AutoFill;
+import com.sky.constant.MessageConstant;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -37,6 +39,8 @@ public class DishServiceImpl implements DishService {
     @Autowired
     private DishFlavorMapper dishFlavorMapper;
 
+    @Autowired
+    private SetmealMapper setmealMapper;
     /**
      * 新增菜品和菜品口味
      * @param dishDTO
@@ -61,11 +65,13 @@ public class DishServiceImpl implements DishService {
             dishFlavorMapper.insertBatch(flavors);
         }
 
-
-
-
     }
 
+    /**
+     * 菜品分页查询
+     * @param dishPageQueryDTO
+     * @return
+     */
     @Override
     public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO) {
         PageHelper.startPage(dishPageQueryDTO.getPage(),dishPageQueryDTO.getPageSize());
@@ -74,5 +80,35 @@ public class DishServiceImpl implements DishService {
         long total = page.getTotal();
         PageResult pageResult = new PageResult(total,records);
         return pageResult;
+    }
+
+    @Override
+    @Transactional
+    public void delete(List<Long> ids) {
+        //当前菜品是否可以删除——菜品是否在售
+        if (ids != null && ids.size() > 0){
+            for (Long id : ids) {
+                Dish dish = dishMapper.getById(id);
+                if (dish.getStatus().equals(StatusConstant.ENABLE)){
+                    //当前菜品处于启售状态，不能删除
+                    throw new RuntimeException(MessageConstant.DISH_ON_SALE);
+                }
+            }
+        }
+        //当前菜品是否被套餐关联
+        if (ids != null && ids.size() > 0){
+            for (Long id : ids) {
+                Long count = setmealMapper.countByDishId(id);
+                if (count > 0){
+                    //当前菜品被套餐关联，不能删除
+                    throw new RuntimeException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
+                }
+            }
+        }
+        //删除菜品——删除菜品口味——删除菜品图片
+        dishMapper.delete(ids);
+        dishFlavorMapper.deleteByDishId(ids);
+
+
     }
 }
