@@ -143,6 +143,11 @@ public class DishServiceImpl implements DishService {
         return dishVO;
     }
 
+    /**
+     * 修改菜品
+     *
+     * @param dishDTO
+     */
     @Override
     @Transactional
     public void update(DishDTO dishDTO) {
