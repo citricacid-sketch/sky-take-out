@@ -1,6 +1,9 @@
 package com.sky.service;
 
 import com.sky.dto.SetmealDTO;
+import com.sky.result.PageResult;
+
+import java.util.List;
 
 /**
  * @author zhangpj
@@ -14,4 +17,18 @@ public interface SetmealService {
     void saveWithDish(SetmealDTO setmealDTO);
 
 
+    /**
+     * 分页查询
+     * @param page
+     * @param pageSize
+     * @param name
+     * @return
+     */
+    PageResult pageQuery(Integer page, Integer pageSize, String name);
+
+    /**
+     * 批量删除
+     * @param ids
+     */
+    void delete(List<Long> ids);
 }
