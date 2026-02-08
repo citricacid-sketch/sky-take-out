@@ -35,7 +35,7 @@ public class DishController {
     public Result save(@RequestBody  DishDTO dishDTO) {
         log.info("新增菜品");
         dishService.saveWithFlavor(dishDTO);
-        return null;
+        return Result.success();
     }
 
     /**
