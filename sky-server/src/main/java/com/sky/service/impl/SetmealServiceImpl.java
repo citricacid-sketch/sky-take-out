@@ -39,6 +39,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Autowired
     private DishMapper dishMapper;
+
     @Override
     @Transactional
     public void saveWithDish(SetmealDTO setmealDTO) {
@@ -49,23 +50,23 @@ public class SetmealServiceImpl implements SetmealService {
         setmealMapper.insert(setmeal);
         //再添加套餐菜品
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
-        if (setmealDishes != null && !setmealDishes.isEmpty()){
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
             setmealDishes.forEach(setmealDish -> {
                 setmealDish.setSetmealId(setmeal.getId());
             });
             setmealDishMapper.insert(setmealDishes);
-        }else {
+        } else {
             //没有菜品，抛出业务异常
             throw new RuntimeException("没有菜品");
         }
         log.info("新增套餐成功");
 
 
-
     }
 
     /**
      * 套餐分页查询
+     *
      * @param page
      * @param pageSize
      * @param name
@@ -84,6 +85,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     /**
      * 批量删除套餐
+     *
      * @param ids
      */
     @Override
@@ -92,7 +94,7 @@ public class SetmealServiceImpl implements SetmealService {
         //先删除套餐,套餐状态为起售，不能删除
         for (Long id : ids) {
             Setmeal setmeal = setmealMapper.getById(id);
-            if (setmeal.getStatus() == 1){
+            if (setmeal.getStatus() == 1) {
                 throw new RuntimeException(MessageConstant.SETMEAL_ON_SALE);
             }
         }
@@ -104,6 +106,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     /**
      * 根据id查询
+     *
      * @param id
      * @return
      */
@@ -118,6 +121,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     /**
      * 修改套餐
+     *
      * @param setmealDTO
      */
     @Override
@@ -131,12 +135,27 @@ public class SetmealServiceImpl implements SetmealService {
         //再修改套餐菜品
         setmealDishMapper.deleteBySetmealId(Arrays.asList(setmeal.getId()));
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
-        if (setmealDishes != null && !setmealDishes.isEmpty()){
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
             setmealDishes.forEach(setmealDish -> {
                 setmealDish.setSetmealId(setmeal.getId());
             });
             setmealDishMapper.insert(setmealDishes);
         }
+    }
+
+    /**
+     * 批量起售停售
+     *
+     * @param status
+     * @param id
+     */
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        Setmeal setmeal = Setmeal.builder()
+                .id(id)
+                .status(status)
+                .build();
+        setmealMapper.update(setmeal);
     }
 
 
