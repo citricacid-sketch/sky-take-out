@@ -58,4 +58,5 @@ import java.util.List;
      * @return
      */
     List<Dish> list(Long categoryId);
+    List<DishVO> listWithFlavor (Dish dish);
 }
