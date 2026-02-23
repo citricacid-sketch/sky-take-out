@@ -10,6 +10,7 @@ import com.sky.utils.JwtUtil;
 import com.sky.vo.UserLoginVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/user/user")
 @Api(tags = "用户接口")
+@Slf4j
 public class UserController {
 
     @Autowired
@@ -47,6 +49,9 @@ public class UserController {
         claims.put(JwtClaimsConstant.USER_ID, user.getId());
         String token = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), claims);
 
+        // 添加调试日志
+        //log.info("生成JWT token: {}", token);
+        //log.info("token中的用户ID: {}", user.getId());
         UserLoginVO userLoginVO = UserLoginVO.builder()
                 .id(user.getId())
                 .openid(user.getOpenid())
