@@ -35,15 +35,4 @@ public interface ShoppingCartMapper {
             " (#{name}, #{image}, #{userId},#{dishId}, #{setmealId}, #{dishFlavor}, #{number}, #{amount}, #{createTime})")
     void insert(ShoppingCart shoppingCard);
 
-    /**
-     * 删除购物车数据
-     * @param userId
-     */
-    void delete(Long userId);
-
-    /**
-     * 根据id删除购物车数据
-     * @param id
-     */
-    void deleteById(Long id);
 }
