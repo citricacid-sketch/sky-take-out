@@ -1,8 +1,15 @@
 package com.sky.mapper;
 
+import com.github.pagehelper.Page;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.time.LocalDateTime;
 
 /**
  * @author zhangpj
@@ -12,7 +19,6 @@ import org.apache.ibatis.annotations.Options;
 @Mapper
 public interface OrderMapper {
 
-
     /**
      * 向数据库中插入订单信息的方法
      *
@@ -20,4 +26,47 @@ public interface OrderMapper {
      */
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Orders orders);
+
+    /**
+     * 根据订单号查询订单
+     *
+     * @param orderNumber
+     */
+    @Select("select * from orders where number = #{orderNumber}")
+    Orders getByNumber(String orderNumber);
+
+    /**
+     * 修改订单信息
+     *
+     * @param orders
+     */
+    void update(Orders orders);
+
+    /**
+     * 修改订单状态
+     *
+     * @param orderNumber
+     * @param orderPaidStatus
+     * @param orderStatus
+     * @param checkOutTime
+     */
+    @Update("update orders set status = #{orderStatus}, pay_status = #{orderPaidStatus}, checkout_time = #{checkOutTime} where number = #{orderNumber}")
+    void updateStatus(String orderNumber, Integer orderPaidStatus, Integer orderStatus, LocalDateTime checkOutTime);
+
+    /**
+     * 分页查询订单
+     *
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    Page<Orders> pagequery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 根据订单ID获取订单信息
+     *
+     * @param id 订单ID，Long类型
+     * @return 返回对应的订单对象，Orders类型
+     */
+    @Select("select * from orders where id = #{id}")
+    Orders getById(Long id);
 }

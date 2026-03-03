@@ -2,6 +2,7 @@ package com.sky.mapper;
 
 import com.sky.entity.OrderDetail;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -19,4 +20,8 @@ public interface OrderDetailMapper {
  * 该方法用于一次性插入多条订单详情记录，提高数据插入效率
  */
     void insertBatch(List<OrderDetail> orderDetailList);
+
+
+    @Select("select * from order_detail where order_id = #{id}")
+    List<OrderDetail> getByOrderId(Long id);
 }
