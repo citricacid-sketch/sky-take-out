@@ -3,6 +3,7 @@ package com.sky.mapper;
 import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
@@ -69,4 +70,12 @@ public interface OrderMapper {
      */
     @Select("select * from orders where id = #{id}")
     Orders getById(Long id);
+
+    /**
+     * 获取订单统计信息的方法
+     * 该方法用于返回订单相关的统计数据，通过返回一个OrderStatisticsVO对象来封装这些数据
+     *
+     * @return OrderStatisticsVO 包含订单统计信息的值对象，可能包含订单总数、订单金额、订单状态分布等信息
+     */
+    Integer countByStatus(Integer toBeConfirmed);
 }
