@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author zhangpj
@@ -78,4 +79,7 @@ public interface OrderMapper {
      * @return OrderStatisticsVO 包含订单统计信息的值对象，可能包含订单总数、订单金额、订单状态分布等信息
      */
     Integer countByStatus(Integer toBeConfirmed);
+
+    @Select("select * from orders where status = #{status} and order_time < #{orderTime}")
+    List<Orders> getByStatusAndOrderTimeLt(Integer status, LocalDateTime orderTime);
 }
