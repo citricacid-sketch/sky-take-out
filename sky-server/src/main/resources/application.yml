@@ -64,5 +64,10 @@ sky:
 #    privateKeyFilePath: ${sky.wechat.privateKeyFilePath}
 #    weChatPayCertFilePath: ${sky.wechat.weChatPayCertFilePath}
 #    refundNotifyUrl: ${sky.wechat.refundNotifyUrl}
+  baidu:
+    # 百度地图AK，需要在百度地图开放平台申请
+    ak: ${sky.baidu.ak}
+    # 商家门店地址
+    shop-address: ${sky.baidu.shop-address}
 
 

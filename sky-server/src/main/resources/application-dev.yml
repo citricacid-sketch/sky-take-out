@@ -29,3 +29,8 @@ sky:
     #    privateKeyFilePath: //私钥文件路径
     #    weChatPayCertFilePath: //微信支付平台证书文件路径
     #    refundNotifyUrl: //退款回调地址
+  baidu:
+    # 百度地图AK，需要在百度地图开放平台申请
+    ak: eieLcGL6Ggf9BCAFiYlvqOUKGCXaebCY
+    # 商家门店地址
+    shop-address: 湖北省武汉市武昌区

@@ -124,6 +124,14 @@
             <version>1.8.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- HttpClient用于调用百度地图API -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+
     </dependencies>
 
     <build>

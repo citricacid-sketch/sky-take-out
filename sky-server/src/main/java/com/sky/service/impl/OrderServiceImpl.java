@@ -13,6 +13,7 @@ import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.utils.BaiduMapUtilFinal;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
@@ -58,6 +59,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private WeChatPayUtil weChatPayUtil;
 
+    @Autowired
+    private BaiduMapUtilFinal baiduMapUtil;
+
     /**
      * 用户下单
      *
@@ -71,6 +75,31 @@ public class OrderServiceImpl implements OrderService {
         AddressBook addressBook = addressBookMapper.getById(ordersSubmitDTO.getAddressBookId());
         if (addressBook == null) {
             throw new AddressBookBusinessException(MessageConstant.ADDRESS_BOOK_IS_NULL);
+        }
+
+        // 校验配送范围
+        String userAddress = (addressBook.getProvinceName() == null ? "" : addressBook.getProvinceName()) +
+                (addressBook.getCityName() == null ? "" : addressBook.getCityName()) +
+                (addressBook.getDistrictName() == null ? "" : addressBook.getDistrictName()) +
+                (addressBook.getDetail() == null ? "" : addressBook.getDetail());
+        
+        log.info("用户收货地址：{}", userAddress);
+        
+        // 验证地址是否为空
+        if (userAddress == null || userAddress.trim().isEmpty()) {
+            throw new OrderBusinessException("收货地址不能为空");
+        }
+
+        Integer distance = baiduMapUtil.calculateDistance(userAddress);
+        if (distance == null) {
+            throw new OrderBusinessException("无法计算配送距离，请检查地址是否正确");
+        }
+        
+        log.info("配送距离：{} 米", distance);
+        
+        // 配送范围为5公里内
+        if (distance > 5000) {
+            throw new OrderBusinessException(MessageConstant.OUT_OF_DELIVERY_RANGE);
         }
 
         //查询购物车数据是否为空

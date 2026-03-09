@@ -30,6 +30,7 @@
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <poi>3.16</poi>
+        <baidu.map>3.7.0</baidu.map>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -128,6 +129,28 @@
                 <artifactId>junit-platform-launcher</artifactId>
                 <version>1.8.2</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!-- 百度地图API -->
+            <dependency>
+                <groupId>com.baidu.mapapi</groupId>
+                <artifactId>baidumapapi_base</artifactId>
+                <version>${baidu.map}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baidu.mapapi</groupId>
+                <artifactId>baidumapapi_search</artifactId>
+                <version>${baidu.map}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baidu.mapapi</groupId>
+                <artifactId>baidumapapi_cloud</artifactId>
+                <version>${baidu.map}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baidu.mapapi</groupId>
+                <artifactId>baidumapapi_util</artifactId>
+                <version>${baidu.map}</version>
             </dependency>
         </dependencies>
 
