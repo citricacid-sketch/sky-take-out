@@ -122,4 +122,11 @@ public interface OrderService {
      * @return PageResult 分页查询结果，包含订单数据列表和分页信息
      */
     PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 提醒功能方法
+     *
+     * @param id 用户或事件的唯一标识符，使用Long类型以支持大数值
+     */
+    void reminder(Long id);
 }

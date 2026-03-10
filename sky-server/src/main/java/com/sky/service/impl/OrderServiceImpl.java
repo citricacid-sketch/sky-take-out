@@ -1,9 +1,11 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
+import com.sky.Websocket.WebSocketServer;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.*;
@@ -27,10 +29,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -62,6 +67,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private BaiduMapUtilFinal baiduMapUtil;
 
+    @Autowired
+    private WebSocketServer webSocketServer;
+
     /**
      * 用户下单
      *
@@ -82,9 +90,9 @@ public class OrderServiceImpl implements OrderService {
                 (addressBook.getCityName() == null ? "" : addressBook.getCityName()) +
                 (addressBook.getDistrictName() == null ? "" : addressBook.getDistrictName()) +
                 (addressBook.getDetail() == null ? "" : addressBook.getDetail());
-        
+
         log.info("用户收货地址：{}", userAddress);
-        
+
         // 验证地址是否为空
         if (userAddress == null || userAddress.trim().isEmpty()) {
             throw new OrderBusinessException("收货地址不能为空");
@@ -94,9 +102,9 @@ public class OrderServiceImpl implements OrderService {
         if (distance == null) {
             throw new OrderBusinessException("无法计算配送距离，请检查地址是否正确");
         }
-        
+
         log.info("配送距离：{} 米", distance);
-        
+
         // 配送范围为5公里内
         if (distance > 5000) {
             throw new OrderBusinessException(MessageConstant.OUT_OF_DELIVERY_RANGE);
@@ -200,6 +208,14 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("调用updateStatus方法,用于替换微信支付更新数据库的问题");
         orderMapper.updateStatus(orderNumber, OrderPaidStatus, OrderStatus, check_out_time);
+
+        Orders orders = orderMapper.getByNumber(orderNumber);
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1); // 1代表来单提醒
+        map.put("orderId", orders.getId());
+        map.put("content", "订单号：" + orders.getNumber());
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
         return vo;
     }
 
@@ -222,6 +238,16 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        //通过websocket向客户端浏览器推送消息 type order_id content
+        Map map = new HashMap<>();
+        //1代表来单提醒 2代表催单提醒
+        map.put("type", 1);
+        map.put("orderId", orders.getId());
+        map.put("content 订单ID", outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+
     }
 
     /**
@@ -457,7 +483,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     *  确认订单的方法
+     * 确认订单的方法
+     *
      * @param id 订单的唯一标识符，用于确认指定订单
      */
     @Override
@@ -473,14 +500,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     *  派送订单
+     * 派送订单
+     *
      * @param id 订单ID，用于标识需要配送的订单
      */
     @Override
     public void deliveryOrder(Long id) {
         Orders ordersDB = orderMapper.getById(id);
         Integer status = ordersDB.getStatus();
-        if (ordersDB != null && status.equals(Orders.CONFIRMED)){
+        if (ordersDB != null && status.equals(Orders.CONFIRMED)) {
             Orders orders = new Orders();
             orders.setId(ordersDB.getId());
             orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
@@ -492,8 +520,30 @@ public class OrderServiceImpl implements OrderService {
     public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
         Page<Orders> page = orderMapper.pagequery(ordersPageQueryDTO);
-         List<OrderVO> orderVOS = getOrderVOS(page);
-         return new PageResult(page.getTotal(), orderVOS);
+        List<OrderVO> orderVOS = getOrderVOS(page);
+        return new PageResult(page.getTotal(), orderVOS);
+    }
+
+    @Override
+    public void reminder(Long id) {
+        //根据Id查询订单
+        Orders ordersDB = orderMapper.getById(id);
+        //获取订单状态
+        Integer status = ordersDB.getStatus();
+
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        Map map = new  HashMap<>();
+        // 2为催单
+        map.put("type",2);
+        map.put("orderId",id);
+        map.put("订单号contant",ordersDB.getNumber());
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+
     }
 
     private List<OrderVO> getOrderVOS(Page<Orders> page) {

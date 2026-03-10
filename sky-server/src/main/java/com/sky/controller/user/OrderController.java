@@ -72,7 +72,6 @@ public class OrderController {
 
     /**
      * 查询订单明细
-     *
      */
     @GetMapping("/orderDetail/{id}")
     @ApiOperation("查询订单明细")
@@ -103,6 +102,20 @@ public class OrderController {
         orderService.repetition(id);
         return Result.success();
     }
+
+    /**
+     * 客户催单功能方法
+     *
+     * @return 返回一个Result对象，可能包含提醒操作的结果信息
+     */
+    @GetMapping("/reminder/{id}")
+    public Result reminder(@PathVariable Long id) {
+        log.info("客户催单功能方法");
+        orderService.reminder(id);
+        return Result.success();
+    }
+
+
 }
 
 
