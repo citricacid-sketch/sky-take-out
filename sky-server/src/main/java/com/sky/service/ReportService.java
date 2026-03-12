@@ -7,6 +7,7 @@ import com.sky.vo.UserReportVO;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -46,4 +47,6 @@ public interface ReportService {
      * @return SalesTop10ReportVO 包含销售排行榜前十数据的视图对象
      */
     SalesTop10ReportVO getSalesTop10Report(LocalDate begin, LocalDate end);
+
+    void export(HttpServletResponse response);
 }

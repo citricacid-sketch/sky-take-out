@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface DishMapper {
@@ -67,10 +68,19 @@ public interface DishMapper {
     void setStatus(Integer status, Long id);
 
 
+
+/**
+ * 根据给定的Dish对象查询并返回一个Dish对象列表
+ *
+ * @param dish 查询条件，用于筛选匹配的Dish对象
+ * @return 返回符合条件的Dish对象列表
+ */
+    List<Dish> list(Dish dish);
+
     /**
-     * 根据条件查询菜品数据
-     * @param dish
+     * 根据条件统计菜品数量
+     * @param map
      * @return
      */
-    List<Dish> list(Dish dish);
+    Integer countByMap(Map map);
 }
