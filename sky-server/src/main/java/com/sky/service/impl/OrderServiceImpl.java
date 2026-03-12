@@ -483,20 +483,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 确认订单的方法
+     * 接受订单的方法
      *
-     * @param id 订单的唯一标识符，用于确认指定订单
+     * @param ordersConfirmDTO 包含订单ID的数据传输对象
      */
     @Override
-    public void confirmOrder(Long id) {
-        Orders ordersDB = orderMapper.getById(id);
-        Integer status = ordersDB.getStatus();
-        if (ordersDB != null && status.equals(Orders.TO_BE_CONFIRMED)) {
-            Orders orders = new Orders();
-            orders.setId(ordersDB.getId());
-            orders.setStatus(Orders.CONFIRMED);
-            orderMapper.update(orders);
-        }
+    public void confirmOrder(OrdersConfirmDTO ordersConfirmDTO) {
+        Orders orders = Orders.builder()
+                .id(ordersConfirmDTO.getId())
+                .status(Orders.CONFIRMED)
+                .build();
+
+        orderMapper.update(orders);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.sky.controller.admin;
 
 import com.sky.dto.OrdersCancelDTO;
+import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersRejectionDTO;
 import com.sky.result.PageResult;
@@ -90,16 +91,16 @@ public class OrderController {
     /**
      * 接单接口
      *
-     * @param id 订单ID，通过路径变量传递
+     * @param ordersConfirmDTO 包含接单所需信息的DTO对象
      * @return 返回操作结果
      * @PutMapping 映射HTTP PUT请求到特定处理方法
      * @ApiOperation 接口描述，用于API文档生成
      */
     @PutMapping("/confirm")
     @ApiOperation("接单")
-    public Result confirmOrder(Long id) {
+    public Result confirmOrder(@RequestBody OrdersConfirmDTO ordersConfirmDTO) {
         log.info("接单");
-        orderService.confirmOrder(id);
+        orderService.confirmOrder(ordersConfirmDTO);
         return Result.success();
     }
 

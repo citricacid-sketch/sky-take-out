@@ -100,11 +100,11 @@ public interface OrderService {
     void rejectionOrder(OrdersRejectionDTO ordersRejectionDTO);
 
     /**
-     * 确认订单的方法
+     * 接收订单的方法
      *
-     * @param id 订单的唯一标识符，用于确认指定订单
+     * @param
      */
-    void confirmOrder(Long id);
+    void confirmOrder(OrdersConfirmDTO ordersConfirmDTO);
 
 
     /**
