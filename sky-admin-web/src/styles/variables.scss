@@ -1,0 +1,36 @@
+// 全局 SCSS 变量
+$primary-color: #FFC300;
+$primary-light-3: #FFD44D;
+$primary-light-5: #FFE280;
+$primary-light-7: #FFEEB3;
+$primary-light-9: #FFF9E6;
+$primary-dark-2: #CCA000;
+
+$sidebar-bg: #304156;
+$sidebar-text: #bfcbd9;
+$sidebar-active: #FFC300;
+
+$menu-bg: #304156;
+$menu-hover: #263445;
+$sub-menu-bg: #1f2d3d;
+
+$text-primary: #303133;
+$text-regular: #606266;
+$text-secondary: #909399;
+$text-placeholder: #c0c4cc;
+
+$border-color: #dcdfe6;
+$border-light: #e4e7ed;
+
+$success: #67c23a;
+$warning: #e6a23c;
+$danger: #f56c6c;
+$info: #909399;
+
+// 导出为 CSS 变量，方便 JS 中使用
+:root {
+  --primary-color: #{$primary-color};
+  --sidebar-bg: #{$sidebar-bg};
+  --sidebar-text: #{$sidebar-text};
+  --sidebar-active: #{$sidebar-active};
+}

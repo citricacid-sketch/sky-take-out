@@ -1,0 +1,40 @@
+// 覆盖 Element Plus 主题色
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #FFC300,
+    ),
+    'success': (
+      'base': #67c23a,
+    ),
+    'warning': (
+      'base': #e6a23c,
+    ),
+    'danger': (
+      'base': #f56c6c,
+    ),
+    'error': (
+      'base': #f56c6c,
+    ),
+    'info': (
+      'base': #909399,
+    ),
+  ),
+  $bg-color: (
+    '': #ffffff,
+    'page': #f0f2f5,
+    'overlay': #ffffff,
+  ),
+  $text-color: (
+    'primary': #303133,
+    'regular': #606266,
+    'secondary': #909399,
+    'placeholder': #c0c4cc,
+  ),
+  $border-color: (
+    '': #dcdfe6,
+    'light': #e4e7ed,
+    'lighter': #ebeef5,
+    'extra-light': #f2f6fc,
+  )
+);
