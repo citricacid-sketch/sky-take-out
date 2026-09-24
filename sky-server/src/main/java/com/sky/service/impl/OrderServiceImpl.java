@@ -13,10 +13,13 @@ import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
+import com.sky.properties.JwtProperties;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.statemachine.OrderStateMachine;
 import com.sky.utils.BaiduMapUtilFinal;
 import com.sky.utils.WeChatPayUtil;
+import com.sky.vo.ActionDetailVO;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
@@ -29,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -303,7 +307,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 取消订单
+     * 取消订单（用户端）
      *
      * @param id 要取消项的唯一标识符
      */
@@ -316,10 +320,8 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
 
-        //订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
-        if (ordersDB.getStatus() > 2) {
-            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
-        }
+        // 状态机校验：当前状态是否允许取消
+        OrderStateMachine.validate(ordersDB.getStatus(), OrderAction.CANCEL);
 
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
@@ -340,7 +342,7 @@ public class OrderServiceImpl implements OrderService {
             orders.setPayStatus(Orders.REFUND);
         }
         // 更新订单状态、取消原因、取消时间
-        orders.setStatus(Orders.CANCELLED);
+        orders.setStatus(OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.CANCEL));
         orders.setCancelReason("用户取消");
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
@@ -379,6 +381,12 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(OrdersCancelDTO ordersCancelDTO) {
         // 根据订单ID查询订单信息
         Orders ordersDB = orderMapper.getById(ordersCancelDTO.getId());
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 状态机校验：当前状态是否允许取消
+        OrderStateMachine.validate(ordersDB.getStatus(), OrderAction.CANCEL);
 
         // 获取订单支付状态
         Integer payStatus = ordersDB.getPayStatus();
@@ -399,7 +407,7 @@ public class OrderServiceImpl implements OrderService {
         }
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
-        orders.setStatus(Orders.CANCELLED);
+        orders.setStatus(OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.CANCEL));
         orders.setCancelReason(ordersCancelDTO.getCancelReason());
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
@@ -427,20 +435,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void completeOrder(Long id) {
-
         Orders ordersDB = orderMapper.getById(id);
-
-        // 检查订单是否存在，且状态为配送中
-        if (ordersDB != null && ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)) {
-            // 创建新的订单对象，仅更新ID和状态
-            Orders orders = new Orders();
-            orders.setId(ordersDB.getId());
-            orders.setStatus(Orders.COMPLETED);
-            orders.setDeliveryTime(LocalDateTime.now());
-            // 更新订单状态为已完成
-            orderMapper.update(orders);
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
+        // 状态机校验 + 获取目标状态
+        Integer targetStatus = OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.COMPLETE);
 
+        Orders orders = new Orders();
+        orders.setId(ordersDB.getId());
+        orders.setStatus(targetStatus);
+        orders.setDeliveryTime(LocalDateTime.now());
+        orderMapper.update(orders);
     }
 
     /**
@@ -452,38 +458,32 @@ public class OrderServiceImpl implements OrderService {
     public void rejectionOrder(OrdersRejectionDTO ordersRejectionDTO) {
         // 根据订单ID查询数据库中的订单信息
         Orders ordersDB = orderMapper.getById(ordersRejectionDTO.getId());
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 状态机校验 + 获取目标状态
+        Integer targetStatus = OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.REJECT);
 
         // 获取订单的支付状态
         Integer payStatus = ordersDB.getPayStatus();
 
-        // 获取订单的当前状态
-        Integer status = ordersDB.getStatus();
-
-        // 检查订单是否存在且状态为待确认
-        if (ordersDB != null && status.equals(Orders.TO_BE_CONFIRMED)) {
-            // 如果订单已支付，则执行退款操作（代码中被注释掉了）
-            if (payStatus.equals(Orders.PAID)) {
-                //try
-                //    String refund = weChatPayUtil.refund(
-                //            ordersDB.getNumber(),
-                //            ordersDB.getNumber(),
-                //            new BigDecimal(0.01),
-                //            new BigDecimal(0.01));
-            }
-            // 创建新的订单对象用于更新
-            Orders orders = new Orders();
-            // 设置订单ID
-            orders.setId(ordersDB.getId());
-            // 更新订单状态为已取消
-            orders.setStatus(Orders.CANCELLED);
-            // 设置拒绝原因
-            orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
-            // 设置取消时间
-            orders.setCancelTime(LocalDateTime.now());
-
-            // 更新订单信息到数据库
-            orderMapper.update(orders);
+        // 如果订单已支付，则执行退款操作（代码中被注释掉了）
+        if (payStatus.equals(Orders.PAID)) {
+            //try
+            //    String refund = weChatPayUtil.refund(
+            //            ordersDB.getNumber(),
+            //            ordersDB.getNumber(),
+            //            new BigDecimal(0.01),
+            //            new BigDecimal(0.01));
         }
+        // 创建新的订单对象用于更新
+        Orders orders = new Orders();
+        orders.setId(ordersDB.getId());
+        orders.setStatus(targetStatus);
+        orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        orders.setCancelTime(LocalDateTime.now());
+        orderMapper.update(orders);
     }
 
     /**
@@ -493,11 +493,17 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public void confirmOrder(OrdersConfirmDTO ordersConfirmDTO) {
+        Orders ordersDB = orderMapper.getById(ordersConfirmDTO.getId());
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 状态机校验 + 获取目标状态
+        Integer targetStatus = OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.CONFIRM);
+
         Orders orders = Orders.builder()
                 .id(ordersConfirmDTO.getId())
-                .status(Orders.CONFIRMED)
+                .status(targetStatus)
                 .build();
-
         orderMapper.update(orders);
     }
 
@@ -509,13 +515,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void deliveryOrder(Long id) {
         Orders ordersDB = orderMapper.getById(id);
-        if (ordersDB != null && ordersDB.getStatus().equals(Orders.CONFIRMED)) {
-            Orders orders = new Orders();
-            orders.setId(ordersDB.getId());
-            orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
-            orders.setDeliveryTime(LocalDateTime.now());
-            orderMapper.update(orders);
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
+        // 状态机校验 + 获取目标状态
+        Integer targetStatus = OrderStateMachine.execute(ordersDB.getStatus(), OrderAction.DELIVER);
+
+        Orders orders = new Orders();
+        orders.setId(ordersDB.getId());
+        orders.setStatus(targetStatus);
+        orders.setDeliveryTime(LocalDateTime.now());
+        orderMapper.update(orders);
     }
 
     @Override
@@ -585,5 +595,47 @@ public class OrderServiceImpl implements OrderService {
 
         // 将该订单对应的所有菜品信息拼接在一起
         return String.join("", orderDishList);
+    }
+
+    /**
+     * 查询用户端针对指定订单可执行的动作列表
+     * 用户可执行：支付(PAY)、取消(CANCEL)
+     */
+    @Override
+    public List<ActionDetailVO> getUserOrderActions(Long id) {
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 校验订单属于当前用户
+        Long currentUserId = BaseContext.getCurrentId();
+        if (!order.getUserId().equals(currentUserId)) {
+            throw new OrderBusinessException("无权操作该订单");
+        }
+        // 用户角色允许的动作
+        List<OrderAction> userAllowed = Arrays.asList(OrderAction.PAY, OrderAction.CANCEL);
+        return OrderStateMachine.getAllowedActionDetails(order.getStatus()).stream()
+                .filter(detail -> userAllowed.stream()
+                        .anyMatch(a -> a.getCode().equals(detail.getAction())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 查询管理端针对指定订单可执行的动作列表
+     * 管理员可执行：接单(CONFIRM)、拒单(REJECT)、派送(DELIVER)、完成(COMPLETE)
+     */
+    @Override
+    public List<ActionDetailVO> getAdminOrderActions(Long id) {
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 管理员角色允许的动作
+        List<OrderAction> adminAllowed = Arrays.asList(
+                OrderAction.CONFIRM, OrderAction.REJECT, OrderAction.DELIVER, OrderAction.COMPLETE);
+        return OrderStateMachine.getAllowedActionDetails(order.getStatus()).stream()
+                .filter(detail -> adminAllowed.stream()
+                        .anyMatch(a -> a.getCode().equals(detail.getAction())))
+                .collect(Collectors.toList());
     }
 }

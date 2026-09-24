@@ -1,8 +1,10 @@
 package com.sky.task;
 
+import com.sky.entity.OrderAction;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.service.impl.OrderServiceImpl;
+import com.sky.statemachine.OrderStateMachine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,11 +23,9 @@ public class OrderTask {
 
     @Autowired
     private OrderMapper orderMapper;
-    @Autowired
-    private OrderServiceImpl orderServiceImpl;
 
     /**
-     * 处理超时未支付的订单
+     * 处理超时未支付的订单：待付款(1) -> 已取消(6)
      */
     @Scheduled(cron = "0 * * * * ? ")
     public void processTimeOutOrder(){
@@ -38,18 +38,18 @@ public class OrderTask {
         if (orderList != null && !orderList.isEmpty()) {
             for (Orders orders : orderList)
             {
-                orders.setStatus(Orders.CANCELLED);
+                // 状态机校验 + 获取目标状态（超时取消）
+                Integer targetStatus = OrderStateMachine.execute(orders.getStatus(), OrderAction.SET_TIMEOUT);
+                orders.setStatus(targetStatus);
                 orders.setCancelReason("超时未支付");
                 orders.setCancelTime(LocalDateTime.now());
                 orderMapper.update(orders);
-
             }
         }
-
     }
 
     /**
-     * 处理一直处于派送中的订单
+     * 处理一直处于派送中的订单：派送中(4) -> 已完成(5)
      */
     @Scheduled(cron = "0 0 1 * * ?  ")
     public void processDeliveryOrder() {
@@ -58,10 +58,11 @@ public class OrderTask {
 
         if (orderList != null && !orderList.isEmpty()) {
             for (Orders orders : orderList) {
-                orders.setStatus(Orders.COMPLETED);
+                // 状态机校验 + 获取目标状态（超时完成）
+                Integer targetStatus = OrderStateMachine.execute(orders.getStatus(), OrderAction.SET_TIMEOUT);
+                orders.setStatus(targetStatus);
                 orders.setCheckoutTime(LocalDateTime.now());
                 orderMapper.update(orders);
-
             }
         }
     }

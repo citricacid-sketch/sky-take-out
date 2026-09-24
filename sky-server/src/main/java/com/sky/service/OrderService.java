@@ -3,11 +3,14 @@ package com.sky.service;
 import com.sky.dto.*;
 import com.sky.entity.OrderDetail;
 import com.sky.result.PageResult;
+import com.sky.vo.ActionDetailVO;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author zhangpj
@@ -129,4 +132,20 @@ public interface OrderService {
      * @param id 用户或事件的唯一标识符，使用Long类型以支持大数值
      */
     void reminder(Long id);
+
+    /**
+     * 查询用户端针对指定订单可执行的动作列表
+     *
+     * @param id 订单 ID
+     * @return 可执行动作列表
+     */
+    List<ActionDetailVO> getUserOrderActions(Long id);
+
+    /**
+     * 查询管理端针对指定订单可执行的动作列表
+     *
+     * @param id 订单 ID
+     * @return 可执行动作列表
+     */
+    List<ActionDetailVO> getAdminOrderActions(Long id);
 }
