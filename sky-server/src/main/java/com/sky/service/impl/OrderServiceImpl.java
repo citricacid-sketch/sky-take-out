@@ -22,7 +22,6 @@ import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -353,6 +352,7 @@ public class OrderServiceImpl implements OrderService {
      * @param id Long类型的参数，用于标识需要处理的重复项
      */
     @Override
+    @Transactional
     public void repetition(Long id) {
         Long userId = BaseContext.getCurrentId();
         // 根据订单ID查询订单

@@ -9,14 +9,17 @@ import com.sky.mapper.UserMapper;
 import com.sky.service.WorkspaceService;
 import com.sky.vo.BusinessDataVO;
 import com.sky.vo.DishOverViewVO;
+import com.sky.vo.OrderDailyReportVO;
 import com.sky.vo.OrderOverViewVO;
 import com.sky.vo.SetmealOverViewVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -82,6 +85,43 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .unitPrice(unitPrice)
                 .newUsers(newUsers)
                 .build();
+    }
+
+    /**
+     * 按日统计指定时间段内的每日营业数据列表
+     * 通过两次 GROUP BY 查询（订单统计 + 用户统计）替代逐日循环查询，大幅减少数据库调用次数
+     */
+    public List<BusinessDataVO> getBusinessDataRange(LocalDateTime begin, LocalDateTime end) {
+        // 一次查询获取每日订单统计
+        List<OrderDailyReportVO> dailyOrderStats = orderMapper.getDailyOrderStats(begin, end);
+        // 一次查询获取每日新增用户数
+        Map<String, Integer> dailyNewUsers = userMapper.getDailyNewUsers(begin, end);
+
+        // 组装每日 BusinessDataVO 列表
+        return dailyOrderStats.stream().map(stat -> {
+            Integer validOrderCount = stat.getValidOrderCount() != null ? stat.getValidOrderCount() : 0;
+            Double turnover = stat.getTurnover() != null ? stat.getTurnover() : 0.0;
+            Integer orderCount = stat.getOrderCount() != null ? stat.getOrderCount() : 0;
+
+            Double unitPrice = 0.0;
+            Double orderCompletionRate = 0.0;
+            if (orderCount != 0 && validOrderCount != 0) {
+                orderCompletionRate = validOrderCount.doubleValue() / orderCount;
+                unitPrice = turnover / validOrderCount;
+            }
+
+            // 从用户统计 Map 中获取当日新增用户数
+            String dateKey = stat.getDate().toString();
+            Integer newUsers = dailyNewUsers.getOrDefault(dateKey, 0);
+
+            return BusinessDataVO.builder()
+                    .turnover(turnover)
+                    .validOrderCount(validOrderCount)
+                    .orderCompletionRate(orderCompletionRate)
+                    .unitPrice(unitPrice)
+                    .newUsers(newUsers)
+                    .build();
+        }).collect(java.util.stream.Collectors.toList());
     }
 
 

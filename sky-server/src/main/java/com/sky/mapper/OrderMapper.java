@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.sky.dto.GoodsSalesDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderDailyReportVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -113,4 +114,12 @@ public interface OrderMapper {
      * @return
      */
     List<GoodsSalesDTO> getGoodsSales(LocalDateTime begin, LocalDateTime end);
+
+    /**
+     * 按日分组统计订单数据（日期、总订单数、有效订单数、营业额），用于报表导出
+     * @param begin
+     * @param end
+     * @return
+     */
+    List<OrderDailyReportVO> getDailyOrderStats(LocalDateTime begin, LocalDateTime end);
 }

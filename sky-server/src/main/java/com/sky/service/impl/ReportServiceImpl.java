@@ -7,10 +7,8 @@ import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.service.WorkspaceService;
 import com.sky.vo.*;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.StringUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +18,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.WatchService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -231,29 +228,34 @@ public class ReportServiceImpl implements ReportService {
         LocalDate datebegin = LocalDate.now().minusDays(30);
         LocalDate dateend = LocalDate.now().minusDays(1);
 
-        //1,查询数据库
-        BusinessDataVO businessDataVo = workspaceService.getBusinessData(LocalDateTime.of(datebegin, LocalTime.MIN), LocalDateTime.of(dateend, LocalTime.MAX));
-        //2,通过POI将数据写入
+        //1, 查询数据库：按日统计近30天数据（仅2次 DB 查询，替代原来的30次循环查询）
+        List<BusinessDataVO> dataList = workspaceService.getBusinessDataRange(
+                LocalDateTime.of(datebegin, LocalTime.MIN),
+                LocalDateTime.of(dateend, LocalTime.MAX));
+
+        // 计算汇总数据（汇总近30天合计）
+        BusinessDataVO summary = calcSummary(dataList, datebegin, dateend);
+
+        //2, 通过POI将数据写入
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(in);
             XSSFSheet sheet = workbook.getSheet("Sheet1");
-            sheet.getRow(1).getCell(1).setCellValue("时间"+datebegin+"-"+dateend);
-            sheet.getRow(3).getCell(2).setCellValue(businessDataVo.getTurnover());
-            sheet.getRow(3).getCell(4).setCellValue(businessDataVo.getOrderCompletionRate());
-            sheet.getRow(3).getCell(6).setCellValue(businessDataVo.getNewUsers());
-            sheet.getRow(4).getCell(2).setCellValue(businessDataVo.getValidOrderCount());
-            sheet.getRow(4).getCell(4).setCellValue(businessDataVo.getUnitPrice());
+            sheet.getRow(1).getCell(1).setCellValue("时间" + datebegin + "-" + dateend);
+            sheet.getRow(3).getCell(2).setCellValue(summary.getTurnover());
+            sheet.getRow(3).getCell(4).setCellValue(summary.getOrderCompletionRate());
+            sheet.getRow(3).getCell(6).setCellValue(summary.getNewUsers());
+            sheet.getRow(4).getCell(2).setCellValue(summary.getValidOrderCount());
+            sheet.getRow(4).getCell(4).setCellValue(summary.getUnitPrice());
 
-            for (int i = 0; i < 30; i++) {
-                LocalDate date = datebegin.plusDays(i);
-                BusinessDataVO daydate = workspaceService.getBusinessData(LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
-                sheet.getRow(7+i).getCell(1).setCellValue(date.toString());
-                sheet.getRow(7+i).getCell(2).setCellValue(daydate.getTurnover());
-                sheet.getRow(7+i).getCell(3).setCellValue(daydate.getValidOrderCount());
-                sheet.getRow(7+i).getCell(4).setCellValue(daydate.getOrderCompletionRate());
-                sheet.getRow(7+i).getCell(5).setCellValue(daydate.getUnitPrice());
-                sheet.getRow(7+i).getCell(6).setCellValue(daydate.getNewUsers());
+            for (int i = 0; i < dataList.size(); i++) {
+                BusinessDataVO dayData = dataList.get(i);
+                sheet.getRow(7 + i).getCell(1).setCellValue(datebegin.plusDays(i).toString());
+                sheet.getRow(7 + i).getCell(2).setCellValue(dayData.getTurnover());
+                sheet.getRow(7 + i).getCell(3).setCellValue(dayData.getValidOrderCount());
+                sheet.getRow(7 + i).getCell(4).setCellValue(dayData.getOrderCompletionRate());
+                sheet.getRow(7 + i).getCell(5).setCellValue(dayData.getUnitPrice());
+                sheet.getRow(7 + i).getCell(6).setCellValue(dayData.getNewUsers());
             }
 
             ServletOutputStream outputStream = response.getOutputStream();
@@ -263,8 +265,41 @@ public class ReportServiceImpl implements ReportService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    /**
+     * 根据每日数据列表计算汇总数据
+     */
+    private BusinessDataVO calcSummary(List<BusinessDataVO> dataList, LocalDate datebegin, LocalDate dateend) {
+        double totalTurnover = 0.0;
+        int totalValidOrders = 0;
+        int totalNewUsers = 0;
+        for (BusinessDataVO data : dataList) {
+            totalTurnover += data.getTurnover() != null ? data.getTurnover() : 0.0;
+            totalValidOrders += data.getValidOrderCount() != null ? data.getValidOrderCount() : 0;
+            totalNewUsers += data.getNewUsers() != null ? data.getNewUsers() : 0;
+        }
+        // 总订单数需要跨整个区间查询（因为 dataList 只包含有数据的日期）
+        Map<String, Object> map = new HashMap<>();
+        map.put("begin", LocalDateTime.of(datebegin, LocalTime.MIN));
+        map.put("end", LocalDateTime.of(dateend, LocalTime.MAX));
+        Integer allOrders = orderMapper.countByMap(map);
+        int totalOrders = allOrders != null ? allOrders : 0;
 
+        double orderCompletionRate = 0.0;
+        double unitPrice = 0.0;
+        if (totalOrders != 0 && totalValidOrders != 0) {
+            orderCompletionRate = (double) totalValidOrders / totalOrders;
+            unitPrice = totalTurnover / totalValidOrders;
+        }
+
+        return BusinessDataVO.builder()
+                .turnover(totalTurnover)
+                .validOrderCount(totalValidOrders)
+                .orderCompletionRate(orderCompletionRate)
+                .unitPrice(unitPrice)
+                .newUsers(totalNewUsers)
+                .build();
     }
 
     /**

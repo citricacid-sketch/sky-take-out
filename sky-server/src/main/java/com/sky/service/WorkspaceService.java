@@ -5,6 +5,7 @@ import com.sky.vo.DishOverViewVO;
 import com.sky.vo.OrderOverViewVO;
 import com.sky.vo.SetmealOverViewVO;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface WorkspaceService {
 
@@ -15,6 +16,14 @@ public interface WorkspaceService {
      * @return
      */
     BusinessDataVO getBusinessData(LocalDateTime begin, LocalDateTime end);
+
+    /**
+     * 按日统计指定时间段内的每日营业数据列表，用于报表导出
+     * @param begin
+     * @param end
+     * @return
+     */
+    List<BusinessDataVO> getBusinessDataRange(LocalDateTime begin, LocalDateTime end);
 
     /**
      * 查询订单管理数据

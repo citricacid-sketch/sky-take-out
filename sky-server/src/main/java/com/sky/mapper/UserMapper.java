@@ -4,6 +4,7 @@ import com.sky.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -38,4 +39,13 @@ public interface UserMapper {
 
 
     Integer countByMap(Map map);
+
+    /**
+     * 按日分组统计新增用户数，用于报表导出
+     * @param begin
+     * @param end
+     * @return Map&lt;LocalDate, Integer&gt; 日期 -> 新增用户数
+     */
+    @Select("SELECT DATE(create_time) AS date, COUNT(*) AS newUsers FROM user WHERE create_time >= #{begin} AND create_time <= #{end} GROUP BY DATE(create_time)")
+    Map<String, Integer> getDailyNewUsers(LocalDateTime begin, LocalDateTime end);
 }

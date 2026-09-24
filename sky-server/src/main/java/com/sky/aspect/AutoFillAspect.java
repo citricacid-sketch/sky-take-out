@@ -16,13 +16,10 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.etsi.uri.x01903.v13.GenericTimeStampType;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-
-import static org.apache.ibatis.ognl.OgnlRuntime.setFieldValue;
 
 /**
  * 自定义填充公共字段的切面

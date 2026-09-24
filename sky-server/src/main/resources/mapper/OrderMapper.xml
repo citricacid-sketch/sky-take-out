@@ -117,4 +117,16 @@
         limit 0,10
     </select>
 
+    <select id="getDailyOrderStats" resultType="com.sky.vo.OrderDailyReportVO">
+        SELECT
+            DATE(order_time) AS date,
+            COUNT(*) AS orderCount,
+            SUM(CASE WHEN status = 5 THEN 1 ELSE 0 END) AS validOrderCount,
+            SUM(CASE WHEN status = 5 THEN amount ELSE 0 END) AS turnover
+        FROM orders
+        WHERE order_time &gt;= #{begin} AND order_time &lt;= #{end}
+        GROUP BY DATE(order_time)
+        ORDER BY DATE(order_time) ASC
+    </select>
+
 </mapper>
