@@ -12,7 +12,6 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +36,7 @@ public class SetmealController {
      * @param setmealDTO
      * @return
      */
-  @CachePut(cacheNames = "setmeal", key = "#setmealDTO.id")
+  @CacheEvict(cacheNames = "setmeal", allEntries = true)
     @PostMapping
     @ApiOperation("套餐数据")
     public Result save (@RequestBody SetmealDTO setmealDTO){
@@ -57,7 +56,7 @@ public class SetmealController {
      */
     @GetMapping("/page")
     public Result<PageResult> page(Integer page, Integer pageSize, String name){
-        log.info("分页查询：{}", page, pageSize, name);
+        log.info("分页查询：page={}, pageSize={}, name={}", page, pageSize, name);
         PageResult pageResult = setmealService.pageQuery(page, pageSize, name);
         return Result.success(pageResult);
     }
@@ -115,7 +114,7 @@ public class SetmealController {
     @PostMapping("/status/{status}")
     @ApiOperation("起售、停售套餐")
     public Result startOrStop(@PathVariable Integer status, Long id){
-        log.info("起售、停售套餐：{}", status, id);
+        log.info("起售、停售套餐：status={}, id={}", status, id);
         setmealService.startOrStop(status, id);
         return Result.success();
     }

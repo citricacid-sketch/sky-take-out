@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
  * @author zhangpj
  * @date 2026/2/10
  */
-@RestController(" adminShopController")
+@RestController("adminShopController")
 @RequestMapping("/admin/shop")
 @Api(tags = "店铺管理")
 @Slf4j
-public class ShopControlller {
+public class ShopController {
 
     public static final String KEY = "SHOP_STATUS";
 
@@ -30,7 +30,7 @@ public class ShopControlller {
      */
     @PutMapping("/{status}")
     public Result setShopStatus(@PathVariable Integer status) {
-        log.info("设置店铺营业状态:{}", status == 1 ? "营业中" : "打样中");
+        log.info("设置店铺营业状态:{}", status == 1 ? "营业中" : "打烊中");
         redisTemplate.opsForValue().set(KEY, status);
         log.info("设置成功");
         return Result.success();
@@ -44,7 +44,7 @@ public class ShopControlller {
     @GetMapping("/status")
     public Result<Integer> getShopStatus() {
         Integer shopStatus = (Integer) redisTemplate.opsForValue().get(KEY);
-        log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打样中");
+        log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打烊中");
         return Result.success(shopStatus);
     }
 }

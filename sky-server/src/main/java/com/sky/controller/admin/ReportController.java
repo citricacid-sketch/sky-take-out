@@ -25,9 +25,9 @@ import java.time.LocalDate;
  */
 @Slf4j
 @RestController("adminReportController")  // 使用@Slf4j注解进行日志记录，将此控制器注册为名为"adminReportController"的Bean
-@RequestMapping("admin/report")          // 设置此控制器的根路径为"admin/report"
+@RequestMapping("/admin/report")          // 设置此控制器的根路径为"/admin/report"
 @Api(tags = "统计相关接口")               // Swagger API文档注解，标记此控制器为"统计相关接口"
-public class ReportControlller { // 报告控制器类，用于处理报告相关的业务逻辑
+public class ReportController { // 报告控制器类，用于处理报告相关的业务逻辑
 
     @Autowired                          // 自动注入ReportService实例
     private ReportService reportService;

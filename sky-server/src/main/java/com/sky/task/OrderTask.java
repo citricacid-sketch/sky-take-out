@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class OrederTask {
+public class OrderTask {
 
     @Autowired
     private OrderMapper orderMapper;

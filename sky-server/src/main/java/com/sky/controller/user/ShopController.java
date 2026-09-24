@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/user/shop")
 @Api(tags = "店铺管理")
 @Slf4j
-public class ShopControlller {
+public class ShopController {
 
     public static final String KEY = "SHOP_STATUS";
 
@@ -30,7 +30,7 @@ public class ShopControlller {
     @GetMapping("/status")
     public Result<Integer> getShopStatus() {
         Integer shopStatus = (Integer) redisTemplate.opsForValue().get( KEY);
-        log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打样中");
+        log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打烊中");
         return Result.success(shopStatus);
     }
 }
