@@ -69,5 +69,16 @@ sky:
     ak: ${sky.baidu.ak}
     # 商家门店地址
     shop-address: ${sky.baidu.shop-address}
+  llm:
+    # LLM API Key（OpenAI 兼容接口）
+    api-key: ${sky.llm.api-key:}
+    # LLM API 基础地址
+    base-url: ${sky.llm.base-url:https://api.openai.com/v1/chat/completions}
+    # 模型名称
+    model: ${sky.llm.model:gpt-4o-mini}
+    # 最大生成 token 数
+    max-tokens: ${sky.llm.max-tokens:1024}
+    # 温度系数
+    temperature: ${sky.llm.temperature:0.7}
 
 

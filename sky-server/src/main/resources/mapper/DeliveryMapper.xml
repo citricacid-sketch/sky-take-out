@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.DeliveryMapper">
+
+    <resultMap id="deliveryResultMap" type="com.sky.entity.Delivery">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="riderId" column="rider_id"/>
+        <result property="status" column="status"/>
+        <result property="assignTime" column="assign_time"/>
+        <result property="pickupTime" column="pickup_time"/>
+        <result property="finishTime" column="finish_time"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into delivery (order_id, rider_id, status, assign_time, pickup_time, finish_time, remark, create_time, update_time)
+        values (#{orderId}, #{riderId}, #{status}, #{assignTime}, #{pickupTime}, #{finishTime}, #{remark}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update" parameterType="com.sky.entity.Delivery">
+        update delivery
+        <set>
+            <if test="orderId != null">
+                order_id = #{orderId},
+            </if>
+            <if test="riderId != null">
+                rider_id = #{riderId},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="assignTime != null">
+                assign_time = #{assignTime},
+            </if>
+            <if test="pickupTime != null">
+                pickup_time = #{pickupTime},
+            </if>
+            <if test="finishTime != null">
+                finish_time = #{finishTime},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="getById" resultMap="deliveryResultMap">
+        select * from delivery where id = #{id}
+    </select>
+
+    <select id="getByOrderId" resultMap="deliveryResultMap">
+        select * from delivery where order_id = #{orderId}
+    </select>
+
+    <select id="list" resultMap="deliveryResultMap" parameterType="com.sky.dto.DeliveryQueryDTO">
+        select * from delivery
+        <where>
+            <if test="orderId != null">
+                and order_id = #{orderId}
+            </if>
+            <if test="riderId != null">
+                and rider_id = #{riderId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+</mapper>

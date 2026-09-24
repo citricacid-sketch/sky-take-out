@@ -129,4 +129,26 @@
         ORDER BY DATE(order_time) ASC
     </select>
 
+    <select id="getFrequentlyOrderedDishIds" resultType="java.lang.Long">
+        select od.dish_id
+        from order_detail od
+                 join orders o on o.id = od.order_id
+        where o.user_id = #{userId}
+          and od.dish_id is not null
+        group by od.dish_id
+        order by count(od.dish_id) desc
+        limit 0, #{limit}
+    </select>
+
+    <select id="getRecentByUserId" resultType="com.sky.entity.Orders">
+        SELECT * FROM orders
+        WHERE user_id = #{userId}
+        ORDER BY order_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="executeQuery" resultType="java.util.LinkedHashMap">
+        ${sql}
+    </select>
+
 </mapper>
