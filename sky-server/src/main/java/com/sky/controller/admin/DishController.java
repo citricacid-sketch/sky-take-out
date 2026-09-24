@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 菜品管理
@@ -91,8 +92,10 @@ public class DishController {
 
     private void clearCache(String pattern) {
         //清理缓存数据
-        String keys = redisTemplate.keys(pattern).toString() ;
-        redisTemplate.delete(keys);
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 
     /**

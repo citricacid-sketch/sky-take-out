@@ -25,11 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -132,6 +130,13 @@ public class OrderServiceImpl implements OrderService {
         orders.setStatus(Orders.PENDING_PAYMENT);
         //设置支付状态为未支付
         orders.setPayStatus(Orders.UN_PAID);
+
+        // 服务端重算订单金额，不信任前端传入的 amount
+        BigDecimal amount = shoppingCartList.stream()
+                .map(cart -> cart.getAmount().multiply(BigDecimal.valueOf(cart.getNumber())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // packAmount 为 int 基本类型，不会为 null，直接取值
+        orders.setAmount(amount.add(BigDecimal.valueOf(orders.getPackAmount())));
 
         //设置收货人信息：从地址簿中获取收货人姓名、电话和地址
         orders.setConsignee(addressBook.getConsignee());
@@ -239,12 +244,12 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.update(orders);
 
-        //通过websocket向客户端浏览器推送消息 type order_id content
+        //通过websocket向客户端浏览器推送消息 type orderId content
         Map map = new HashMap<>();
         //1代表来单提醒 2代表催单提醒
         map.put("type", 1);
         map.put("orderId", orders.getId());
-        map.put("content 订单ID", outTradeNo);
+        map.put("content", "订单号：" + outTradeNo);
         String json = JSON.toJSONString(map);
         webSocketServer.sendToAllClient(json);
 
@@ -425,14 +430,13 @@ public class OrderServiceImpl implements OrderService {
 
         Orders ordersDB = orderMapper.getById(id);
 
-        // 获取订单的当前状态
-        Integer status = ordersDB.getStatus();
-        // 检查订单是否存在，状态为配送中，且已支付
-        if (ordersDB != null || !status.equals(Orders.DELIVERY_IN_PROGRESS)) {
+        // 检查订单是否存在，且状态为配送中
+        if (ordersDB != null && ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)) {
             // 创建新的订单对象，仅更新ID和状态
             Orders orders = new Orders();
             orders.setId(ordersDB.getId());
             orders.setStatus(Orders.COMPLETED);
+            orders.setDeliveryTime(LocalDateTime.now());
             // 更新订单状态为已完成
             orderMapper.update(orders);
         }
@@ -505,11 +509,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void deliveryOrder(Long id) {
         Orders ordersDB = orderMapper.getById(id);
-        Integer status = ordersDB.getStatus();
-        if (ordersDB != null && status.equals(Orders.CONFIRMED)) {
+        if (ordersDB != null && ordersDB.getStatus().equals(Orders.CONFIRMED)) {
             Orders orders = new Orders();
             orders.setId(ordersDB.getId());
             orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
+            orders.setDeliveryTime(LocalDateTime.now());
             orderMapper.update(orders);
         }
     }
@@ -526,18 +530,16 @@ public class OrderServiceImpl implements OrderService {
     public void reminder(Long id) {
         //根据Id查询订单
         Orders ordersDB = orderMapper.getById(id);
-        //获取订单状态
-        Integer status = ordersDB.getStatus();
 
         if (ordersDB == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
 
-        Map map = new  HashMap<>();
+        Map map = new HashMap<>();
         // 2为催单
-        map.put("type",2);
-        map.put("orderId",id);
-        map.put("订单号contant",ordersDB.getNumber());
+        map.put("type", 2);
+        map.put("orderId", id);
+        map.put("content", "订单号：" + ordersDB.getNumber());
 
         String json = JSON.toJSONString(map);
         webSocketServer.sendToAllClient(json);

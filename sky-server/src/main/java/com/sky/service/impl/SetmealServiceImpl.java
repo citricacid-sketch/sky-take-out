@@ -7,6 +7,7 @@ import com.sky.constant.MessageConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
+import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
@@ -42,6 +43,7 @@ public class SetmealServiceImpl implements SetmealService {
     private DishMapper dishMapper;
 
     /**
+     * 条件查询
      * 新增套餐
      *
      * @param setmealDTO
@@ -157,6 +159,18 @@ public class SetmealServiceImpl implements SetmealService {
      */
     @Override
     public void startOrStop(Integer status, Long id) {
+        // 启售时，校验套餐内所有菜品均为起售状态
+        if (Integer.valueOf(1).equals(status)) {
+            List<SetmealDish> setmealDishes = setmealDishMapper.list(id);
+            if (setmealDishes != null && !setmealDishes.isEmpty()) {
+                for (SetmealDish setmealDish : setmealDishes) {
+                    Dish dish = dishMapper.getById(setmealDish.getDishId());
+                    if (dish != null && dish.getStatus() == 0) {
+                        throw new com.sky.exception.SetmealEnableFailedException(MessageConstant.SETMEAL_ENABLE_FAILED);
+                    }
+                }
+            }
+        }
         Setmeal setmeal = Setmeal.builder()
                 .id(id)
                 .status(status)

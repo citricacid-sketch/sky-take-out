@@ -76,7 +76,7 @@
 
     <!--根据分类id查询菜品-->
     <select id="list" resultType="com.sky.entity.Dish">
-        select d.*,c.name as categoryNameas
+        select d.*,c.name as categoryName
         from dish d left outer join category c on c.id = d.category_id
         where d.status = 1
         <if test="categoryId != null">

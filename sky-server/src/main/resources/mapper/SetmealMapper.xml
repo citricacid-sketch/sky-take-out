@@ -7,8 +7,7 @@
         insert into setmeal (name, category_id, price, status,
                              create_time, update_time, create_user, update_user)
         values (#{name}, #{categoryId}, #{price}, #{status},
-                #{createTime}, #{updat
-                eTime}, #{createUser}, #{updateUser})
+                #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
     </insert>
     <!--修改套餐-->
     <update id="update">
@@ -73,7 +72,7 @@
         from setmeal
         <where>
             <if test="name != null and name != ''">
-                and name like '%${name}%'
+                and name like concat('%',#{name},'%')
             </if>
             <if test="categoryId != null">
                 and category_id = #{categoryId}

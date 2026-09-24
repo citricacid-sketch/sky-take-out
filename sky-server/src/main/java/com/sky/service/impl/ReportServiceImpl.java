@@ -57,11 +57,11 @@ public class ReportServiceImpl implements ReportService {
 
         //用户存放从begin到end的每天的日期列表,用逗号隔开
         List<LocalDate> dateList = new ArrayList<>();
-        while (!begin.equals(end)) {
-            // 将日期递增一天，继续循环
-            begin = begin.plusDays(1);
+        while (begin.equals(end) || begin.isBefore(end)) {
             // 将当前日期添加到日期列表中
             dateList.add(begin);
+            // 将日期递增一天，继续循环
+            begin = begin.plusDays(1);
         }
 
         List<Double> turnoverList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ReportServiceImpl implements ReportService {
             Map map = new HashMap<>();
             map.put("begin", beginTime);
             map.put("end", endDateTime);
-            map.put("status", 5);
+            map.put("status", Orders.COMPLETED);
             Double turnover = orderMapper.sumByMap(map);
             turnover = turnover == null ? 0.0 : turnover;
             turnoverList.add(turnover);
@@ -98,11 +98,11 @@ public class ReportServiceImpl implements ReportService {
     public UserReportVO getUserReport(LocalDate begin, LocalDate end) {
         // 创建一个LocalDate列表，用于存储日期范围内的所有日期
         List<LocalDate> dateList = new ArrayList<>();
-        while (!begin.equals(end)) {
-            // 将日期递增一天，继续循环
-            begin = begin.plusDays(1);
+        while (begin.equals(end) || begin.isBefore(end)) {
             // 将当前日期添加到日期列表中
             dateList.add(begin);
+            // 将日期递增一天，继续循环
+            begin = begin.plusDays(1);
         }
 
         List<Integer> newUserList = new ArrayList<>();
@@ -139,11 +139,11 @@ public class ReportServiceImpl implements ReportService {
         // 创建一个LocalDate列表，用于存储日期范围内的所有日期
         List<LocalDate> dateList = new ArrayList<>();
         // 循环遍历从开始日期到结束日期之间的所有日期
-        while (!begin.equals(end)) {
-            // 将日期递增一天，继续循环
-            begin = begin.plusDays(1);
+        while (begin.equals(end) || begin.isBefore(end)) {
             // 将当前日期添加到日期列表中
             dateList.add(begin);
+            // 将日期递增一天，继续循环
+            begin = begin.plusDays(1);
         }
 
 
