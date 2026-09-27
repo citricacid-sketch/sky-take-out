@@ -69,22 +69,6 @@ sky:
     ak: ${sky.baidu.ak}
     # 商家门店地址
     shop-address: ${sky.baidu.shop-address}
-  llm:
-    # LLM API Key（OpenAI 兼容接口），通过环境变量 LLM_API_KEY 注入，避免提交到仓库
-    api-key: ${LLM_API_KEY:}
-    # LLM API 基础地址
-    base-url: ${LLM_BASE_URL:https://longcat.chat/v1/chat/completions}
-    # 模型名称
-    model: ${LLM_MODEL:Longcat-Flash-Chat}
-    # 最大生成 token 数
-    max-tokens: ${LLM_MAX_TOKENS:1024}
-    # 温度系数
-    temperature: ${LLM_TEMPERATURE:0.7}
-  query:
-    # AI 查询超时时间（毫秒）
-    timeout-ms: ${AI_QUERY_TIMEOUT_MS:8000}
-    # AI 查询最大返回行数
-    max-rows: ${AI_QUERY_MAX_ROWS:100}
   ai:
     service:
       # AI 服务提供方: java (默认) / python — 双跑开关
