@@ -73,7 +73,7 @@ async function handleLogin() {
   try {
     await userStore.login({
       username: loginForm.username,
-      password: md5(loginForm.password),
+      password: loginForm.password,
     })
     ElMessage.success('登录成功')
     router.push('/dashboard')

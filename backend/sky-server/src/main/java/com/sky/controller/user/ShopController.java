@@ -29,8 +29,16 @@ public class ShopController {
      */
     @GetMapping("/status")
     public Result<Integer> getShopStatus() {
-        Integer shopStatus = (Integer) redisTemplate.opsForValue().get( KEY);
-        log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打烊中");
-        return Result.success(shopStatus);
+        try {
+            Integer shopStatus = (Integer) redisTemplate.opsForValue().get(KEY);
+            if (shopStatus == null) {
+                shopStatus = 1; // 默认营业中
+            }
+            log.info("获取营业状态成功，结果：{}", shopStatus == 1 ? "营业中" : "打烊中");
+            return Result.success(shopStatus);
+        } catch (Exception e) {
+            log.error("获取店铺状态失败", e);
+            return Result.success(1); // Redis 异常时默认返回营业中
+        }
     }
 }

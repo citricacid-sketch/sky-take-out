@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "菜单",
+  "navigationBarBackgroundColor": "#FFFBF5",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "loading-skeleton": "/components/loading-skeleton/loading-skeleton",
+    "empty-state": "/components/empty-state/empty-state",
+    "product-card": "/components/product-card/product-card"
+  }
+}

@@ -1,0 +1,71 @@
+<!-- pages/profile/profile.wxml -->
+<!-- Profile: 克制。V1 不实现积分/优惠券/资料持久化（后端无能力）。 -->
+
+<view class="page">
+  <!-- Identity card -->
+  <view class="id-card">
+    <view class="avatar">{{avatarText}}</view>
+    <view class="id-info">
+      <view class="nickname">{{nickname}}</view>
+      <view class="hint">{{loginHint}}</view>
+    </view>
+    <view wx:if="{{!isLoggedIn}}" class="login-btn" bindtap="onLogin">登录</view>
+  </view>
+
+  <!-- Order shortcuts -->
+  <view class="card order-card">
+    <view class="order-head" bindtap="onOrders">
+      <text class="order-title">我的订单</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="order-grid">
+      <view class="order-cell" data-status="1" bindtap="onOrderStatus">
+        <view class="oc-icon">
+          <image class="oc-ico-img" src="/assets/icons/order-pending.svg" mode="aspectFit" />
+        </view>
+        <view class="oc-label">待付款</view>
+      </view>
+      <view class="order-cell" data-status="2" bindtap="onOrderStatus">
+        <view class="oc-icon">
+          <image class="oc-ico-img" src="/assets/icons/order-preparing.svg" mode="aspectFit" />
+        </view>
+        <view class="oc-label">商家处理中</view>
+      </view>
+      <view class="order-cell" data-status="4" bindtap="onOrderStatus">
+        <view class="oc-icon">
+          <image class="oc-ico-img" src="/assets/icons/order-delivering.svg" mode="aspectFit" />
+        </view>
+        <view class="oc-label">配送中</view>
+      </view>
+      <view class="order-cell" data-status="5" bindtap="onOrderStatus">
+        <view class="oc-icon">
+          <image class="oc-ico-img" src="/assets/icons/order-completed.svg" mode="aspectFit" />
+        </view>
+        <view class="oc-label">已完成</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Entry list -->
+  <view class="entry-list">
+    <view class="entry" bindtap="onAddress">
+      <text class="entry-label">收货地址</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="entry-divider"></view>
+    <view wx:if="{{isLoggedIn}}" class="entry" bindtap="onLogout">
+      <text class="entry-label logout-text">退出登录</text>
+    </view>
+    <view class="entry" bindtap="onAbout">
+      <text class="entry-label">关于</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="footer-note">鲜味小厨</view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

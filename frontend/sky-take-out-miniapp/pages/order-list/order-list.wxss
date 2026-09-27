@@ -1,0 +1,120 @@
+/* pages/order-list/order-list.wxss */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+/* Tabs */
+.tabs {
+  width: 100%;
+  white-space: nowrap;
+  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.tabs-inner {
+  display: inline-flex;
+  gap: var(--sp-sm);
+  padding: var(--sp-lg);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 14rpx 32rpx;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* List */
+.list {
+  padding: var(--sp-lg);
+}
+
+.order-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1rpx solid var(--color-border);
+  padding: var(--sp-xl);
+  margin-bottom: var(--sp-md);
+}
+
+.order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-md);
+}
+
+.order-number {
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.order-status {
+  font: var(--font-secondary);
+  font-weight: 600;
+}
+
+.order-status.is-pending {
+  color: var(--color-primary);
+}
+
+.order-status.is-done {
+  color: var(--color-accent);
+}
+
+.order-status.is-cancelled {
+  color: var(--color-text-tertiary);
+}
+
+.order-dishes {
+  font: var(--font-secondary);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: var(--sp-md);
+}
+
+.order-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-time {
+  font: var(--font-caption);
+  color: var(--color-text-tertiary);
+}
+
+.order-amount {
+  font: var(--font-price);
+  color: var(--color-text);
+}
+
+.list-end {
+  text-align: center;
+  font: var(--font-caption);
+  color: var(--color-text-tertiary);
+  padding: var(--sp-xl) 0;
+}
+
+.empty-wrap {
+  padding-top: 120rpx;
+}
+
+.safe-bottom {
+  height: var(--sp-3xl);
+}

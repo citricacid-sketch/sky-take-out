@@ -1,0 +1,59 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/menu/menu",
+    "pages/cart/cart",
+    "pages/profile/profile",
+    "pages/login/login",
+    "pages/dish-detail/dish-detail",
+    "pages/checkout/checkout",
+    "pages/order-list/order-list",
+    "pages/order-detail/order-detail",
+    "pages/address/address",
+    "pages/address-edit/address-edit"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFFBF5",
+    "navigationBarTitleText": "点餐",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFFBF5"
+  },
+  "tabBar": {
+    "color": "#A8A29E",
+    "selectedColor": "#D97706",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/menu/menu",
+        "text": "菜单",
+        "iconPath": "assets/tabbar/menu.png",
+        "selectedIconPath": "assets/tabbar/menu-active.png"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "text": "购物车",
+        "iconPath": "assets/tabbar/cart.png",
+        "selectedIconPath": "assets/tabbar/cart-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "usingComponents": {
+    "ai-chat": "/components/ai-chat/ai-chat"
+  }
+}

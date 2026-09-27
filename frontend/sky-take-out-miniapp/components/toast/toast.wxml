@@ -1,0 +1,9 @@
+<!-- components/toast/toast.wxml -->
+<view wx:if="{{visible}}" class="toast-mask" bindtap="onTap">
+  <view class="toast {{icon === 'loading' ? 'toast-loading' : ''}}">
+    <text wx:if="{{icon === 'success'}}">✓</text>
+    <text wx:elif="{{icon === 'error'}}">✕</text>
+    <text wx:elif="{{icon === 'loading'}}" class="toast-spinner"></text>
+    <text class="toast-text">{{message}}</text>
+  </view>
+</view>

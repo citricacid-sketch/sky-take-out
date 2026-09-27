@@ -1,0 +1,58 @@
+<!-- pages/cart/cart.wxml -->
+<!-- Real cart: live item list, per-line qty +/-, total bar, clear + checkout. -->
+
+<view class="page">
+  <!-- Header with clear action -->
+  <view class="cart-head" wx:if="{{items.length}}">
+    <text class="cart-title">共 {{count}} 件商品</text>
+    <view class="clear-btn" bindtap="onClean">清空</view>
+  </view>
+
+  <!-- Item list -->
+  <scroll-view wx:if="{{items.length}}" class="cart-list" scroll-y="{{true}}" enhanced="{{true}}">
+    <view wx:for="{{items}}" wx:key="id" class="cart-row">
+      <view class="row-img-wrap">
+        <image wx:if="{{item.hasImage}}" class="row-img" src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" />
+        <view wx:else class="row-img row-img-placeholder">
+          <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
+        </view>
+      </view>
+      <view class="row-body">
+        <text class="row-name">{{item.name}}</text>
+        <text wx:if="{{item.flavorText}}" class="row-flavor">{{item.flavorText}}</text>
+        <text class="row-price">{{item.subtotalText}}</text>
+      </view>
+      <view class="row-qty">
+        <view class="qty-btn" data-dish-id="{{item.dishId}}" data-dish-flavor='{{item.dishFlavor}}' bindtap="onDecrease">−</view>
+        <view class="qty-num">{{item.number}}</view>
+        <view class="qty-btn" data-dish-id="{{item.dishId}}" data-dish-flavor='{{item.dishFlavor}}' bindtap="onIncrease">+</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Empty state -->
+  <view wx:if="{{!items.length}}" class="empty-wrap">
+    <empty-state
+      title="购物车是空的"
+      subtitle="去看看有什么好吃的"
+      actionText="去点餐"
+      bind:action="onGoMenu"
+    />
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- Fixed total / checkout bar -->
+  <view wx:if="{{items.length}}" class="total-bar">
+    <view class="total-info">
+      <text class="total-label">合计</text>
+      <text class="total-price">¥{{totalText}}</text>
+    </view>
+    <view class="checkout-btn {{checkoutEnabled ? '' : 'disabled'}}" bindtap="onCheckout">
+      去结算
+    </view>
+  </view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

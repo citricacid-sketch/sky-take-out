@@ -1,0 +1,57 @@
+<!-- pages/order-list/order-list.wxml -->
+<!-- Order history: status tabs + paged list + pull-to-refresh + load more. -->
+
+<view class="page">
+  <!-- Status tabs -->
+  <scroll-view class="tabs" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <view class="tabs-inner">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="value"
+        class="tab {{activeTab === item.value ? 'active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="onTabChange"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Order list -->
+  <view wx:if="{{orders.length}}" class="list">
+    <view
+      wx:for="{{orders}}"
+      wx:key="id"
+      class="order-card"
+      data-id="{{item.id}}"
+      bindtap="onOrderTap"
+    >
+      <view class="order-head">
+        <text class="order-number">{{item.number}}</text>
+        <text class="order-status {{item.statusClass}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-dishes">{{item.dishSummary}}</view>
+      <view class="order-foot">
+        <text class="order-time">{{item.orderTime}}</text>
+        <text class="order-amount">¥{{item.amountText}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{finished}}" class="list-end">— 没有更多了 —</view>
+  </view>
+
+  <!-- Empty -->
+  <view wx:if="{{!orders.length && !loading}}" class="empty-wrap">
+    <empty-state
+      title="暂无订单"
+      subtitle="快去点餐吧"
+      actionText="去点餐"
+      bind:action="onGoMenu"
+    />
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

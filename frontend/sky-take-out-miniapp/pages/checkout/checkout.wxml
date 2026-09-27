@@ -1,0 +1,80 @@
+<!-- pages/checkout/checkout.wxml -->
+<!-- Checkout: address + read-only item list + remark + amount breakdown + submit. -->
+
+<view class="page">
+  <!-- Address -->
+  <view class="addr-card" bindtap="onSelectAddress">
+    <view class="addr-icon">
+      <image class="addr-ico-img" src="/assets/icons/location.svg" mode="aspectFit" />
+    </view>
+    <view class="addr-body" wx:if="{{hasAddress}}">
+      <view class="addr-row">
+        <text class="addr-consignee">{{consignee}}</text>
+        <text class="addr-phone">{{phone}}</text>
+      </view>
+      <view class="addr-text">{{addressText}}</view>
+    </view>
+    <view class="addr-body addr-empty" wx:else>
+      <view class="addr-placeholder">{{addressText}}</view>
+    </view>
+    <view class="addr-arrow">›</view>
+  </view>
+
+  <!-- Item list -->
+  <view class="section">
+    <view class="section-title">商品清单</view>
+    <view wx:for="{{items}}" wx:key="id" class="line-row">
+      <view class="line-img-wrap">
+        <image wx:if="{{item.hasImage}}" class="line-img" src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" />
+        <view wx:else class="line-img line-img-placeholder">
+          <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
+        </view>
+      </view>
+      <view class="line-body">
+        <text class="line-name">{{item.name}}</text>
+        <text wx:if="{{item.flavorText}}" class="line-flavor">{{item.flavorText}}</text>
+      </view>
+      <view class="line-right">
+        <text class="line-qty">×{{item.number}}</text>
+        <text class="line-sub">{{item.subtotalText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Remark -->
+  <view class="section">
+    <view class="section-title">备注</view>
+    <textarea
+      class="remark"
+      placeholder="选填，如需备注请输入（口味、配送要求等）"
+      bindinput="onRemark"
+      value="{{remark}}"
+      maxlength="100"
+    />
+  </view>
+
+  <!-- Amount breakdown -->
+  <view class="section amount-section">
+    <view class="amount-row">
+      <text class="amount-label">商品合计</text>
+      <text class="amount-val">¥{{itemTotalText}}</text>
+    </view>
+    <view class="amount-row">
+      <text class="amount-label">配送费</text>
+      <text class="amount-val">¥{{deliveryFeeText}}</text>
+    </view>
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- Fixed submit bar -->
+  <view class="submit-bar">
+    <view class="submit-total">
+      <text class="total-label">合计</text>
+      <text class="total-price">¥{{orderTotalText}}</text>
+    </view>
+    <view class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="onSubmit" loading="{{submitting}}">
+      提交订单
+    </view>
+  </view>
+</view>

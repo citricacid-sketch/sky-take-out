@@ -1,0 +1,11 @@
+<!-- components/section-header/section-header.wxml -->
+<view class="section-header">
+  <view class="title-row">
+    <text class="title">{{title}}</text>
+    <text wx:if="{{subtitle}}" class="subtitle">{{subtitle}}</text>
+  </view>
+  <view wx:if="{{actionText}}" class="action" bindtap="onAction">
+    <text>{{actionText}}</text>
+    <text class="arrow">›</text>
+  </view>
+</view>

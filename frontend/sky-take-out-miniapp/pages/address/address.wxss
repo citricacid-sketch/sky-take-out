@@ -1,0 +1,124 @@
+/* pages/address/address.wxss */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+.addr-list {
+  padding: var(--sp-lg);
+}
+
+.addr-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1rpx solid var(--color-border);
+  margin-bottom: var(--sp-md);
+  overflow: hidden;
+}
+
+.addr-info {
+  padding: var(--sp-xl);
+}
+
+.addr-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-sm);
+}
+
+.addr-line:last-child {
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.addr-consignee {
+  font: var(--font-product-name);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.addr-phone {
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.default-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 12rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font: var(--font-caption);
+}
+
+.label-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 12rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font: var(--font-caption);
+}
+
+.addr-full {
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.addr-actions {
+  display: flex;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.act {
+  flex: 1;
+  text-align: center;
+  padding: var(--sp-md);
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.act:active {
+  background: var(--color-surface-alt);
+}
+
+.act-danger {
+  color: var(--color-danger);
+}
+
+.empty-wrap {
+  padding-top: 120rpx;
+}
+
+.add-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-lg);
+  padding-bottom: calc(var(--sp-lg) + env(safe-area-inset-bottom));
+  background: var(--color-surface);
+  box-shadow: var(--shadow-top);
+}
+
+.add-btn {
+  background: var(--color-primary);
+  color: #fff;
+  font: var(--font-button);
+  border-radius: var(--radius-pill);
+  padding: 24rpx;
+  text-align: center;
+}
+
+.add-btn:active {
+  background: var(--color-primary-dark);
+}
+
+.safe-bottom {
+  height: var(--sp-3xl);
+}

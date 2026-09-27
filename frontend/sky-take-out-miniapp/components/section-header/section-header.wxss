@@ -1,0 +1,36 @@
+/* components/section-header/section-header.wxss */
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: var(--sp-lg) 0 var(--sp-md);
+}
+
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-sm);
+}
+
+.title {
+  font: var(--font-section-title);
+  color: var(--color-text);
+}
+
+.subtitle {
+  font: var(--font-caption);
+  color: var(--color-text-tertiary);
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.arrow {
+  font-size: 32rpx;
+  color: var(--color-text-tertiary);
+}

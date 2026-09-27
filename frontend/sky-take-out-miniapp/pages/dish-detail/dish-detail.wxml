@@ -1,0 +1,66 @@
+<!-- pages/dish-detail/dish-detail.wxml -->
+<!-- Dish detail: image + info + mandatory flavor spec picker + qty + add-to-cart. -->
+
+<view class="page" wx:if="{{dish}}">
+  <!-- Top bar with cart shortcut -->
+  <view class="topbar">
+    <view class="back" bindtap="onGoBack">‹</view>
+    <view class="cart-shortcut" bindtap="onGoCart">
+      <image class="cart-ico-img" src="/assets/icons/cart.svg" mode="aspectFit" />
+      <text class="cart-label">购物车</text>
+    </view>
+  </view>
+
+  <!-- Hero image -->
+  <view class="hero-img-wrap">
+    <image wx:if="{{hasImage}}" class="hero-img" src="{{dish.image}}" mode="aspectFill" lazy-load="{{true}}" />
+    <view wx:else class="hero-img hero-img-placeholder">
+      <image class="ph-icon ph-icon-lg" src="/assets/icons/dish.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <!-- Info -->
+  <view class="dish-info">
+    <view class="dish-name">{{dish.name}}</view>
+    <view class="dish-price">¥{{priceText}}</view>
+    <view wx:if="{{dish.description}}" class="dish-desc">{{dish.description}}</view>
+  </view>
+
+  <!-- Flavor spec picker -->
+  <view wx:if="{{flavorGroups.length}}" class="spec-section">
+    <view class="spec-section-title">选择规格</view>
+    <view wx:for="{{flavorGroups}}" wx:key="name" class="flavor-group">
+      <view class="flavor-name">{{item.name}}</view>
+      <view class="flavor-options">
+        <view
+          wx:for="{{item.options}}"
+          wx:for-item="option"
+          wx:key="*this"
+          class="flavor-pill {{item.selected === option ? 'active' : ''}}"
+          data-group="{{item.name}}"
+          data-option="{{option}}"
+          bindtap="onFlavorSelect"
+        >
+          {{option}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- Fixed bottom action bar -->
+  <view class="action-bar">
+    <view class="qty-control">
+      <view class="qty-btn" data-delta="-1" bindtap="onQuantityChange">−</view>
+      <view class="qty-num">{{quantity}}</view>
+      <view class="qty-btn" data-delta="1" bindtap="onQuantityChange">+</view>
+    </view>
+    <view class="add-btn {{adding ? 'disabled' : ''}}" bindtap="onAddToCart" loading="{{adding}}">
+      加入购物车
+    </view>
+  </view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

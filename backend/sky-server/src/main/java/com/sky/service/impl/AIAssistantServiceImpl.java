@@ -25,19 +25,18 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     /**
      * 数据库表结构描述（用于拼 prompt）
+     * 注意：与 SqlSecurityValidator 的白名单保持一致
      */
     private static final String TABLE_SCHEMA = "以下是苍穹外卖系统的 MySQL 数据库表结构：\n\n" +
             "1. orders（订单表）: id, number(订单号), status(1待付款 2待接单 3已接单 4派送中 5已完成 6已取消), " +
             "user_id, address_book_id, order_time(下单时间), checkout_time(结账时间), pay_method(支付方式), " +
-            "pay_status(支付状态 0未支付 1已支付), amount(金额), remark, user_name, phone, address, consignee, " +
-            "cancel_reason, rejection_reason, cancel_time, estimated_delivery_time, delivery_time, pack_amount, tableware_number\n\n" +
-            "2. order_detail（订单明细表）: id, name(商品名称), order_id, dish_id, setmeal_id, dishFlavor(口味), number(数量), amount, image\n\n" +
-            "3. dish（菜品表）: id, name, category_id, price, image, description, status(0停售 1起售), create_time, update_time, create_user, update_user\n\n" +
-            "4. setmeal（套餐表）: id, category_id, name, price, status(0停售 1起售), description, image, create_time, update_time, create_user, update_user\n\n" +
-            "5. category（分类表）: id, type(1菜品分类 2套餐分类), name, sort, status, create_time, update_time, create_user, update_user\n\n" +
-            "6. user（用户表）: id, openid, name, phone, sex, id_number, avatar, create_time\n\n" +
-            "7. employee（员工表）: id, username, name, password, phone, sex, id_number, status(0禁用 1正常), create_time, update_time, create_user, update_user\n\n" +
-            "注意：order_time 和 create_time 等时间字段是 datetime 类型，可以使用 DATE() 函数提取日期，使用 DATE_SUB(CURDATE(), INTERVAL 7 DAY) 等方式表示时间范围。";
+            "pay_status(支付状态 0未支付 1已支付), amount(金额), remark, estimated_delivery_time, delivery_time, pack_amount, tableware_number\n\n" +
+            "2. order_detail（订单明细表）: id, name(商品名称), order_id, dish_id, setmeal_id, dishFlavor(口味), number(数量), amount\n\n" +
+            "3. dish（菜品表）: id, name, category_id, price, description, status(0停售 1起售), create_time, update_time\n\n" +
+            "4. setmeal（套餐表）: id, category_id, name, price, status(0停售 1起售), description, create_time, update_time\n\n" +
+            "5. category（分类表）: id, type(1菜品分类 2套餐分类), name, sort, status\n\n" +
+            "注意：order_time 和 create_time 等时间字段是 datetime 类型，可以使用 DATE() 函数提取日期，使用 DATE_SUB(CURDATE(), INTERVAL 7 DAY) 等方式表示时间范围。" +
+            "禁止访问 user、employee 表，禁止访问 password、phone、address、id_number 等敏感字段。";
 
     /**
      * System prompt：生成 SQL
@@ -46,13 +45,17 @@ public class AIAssistantServiceImpl implements AIAssistantService {
             + TABLE_SCHEMA + "\n\n" +
             "规则：\n" +
             "1. 只生成 SELECT 查询语句\n" +
-            "2. 只使用上面列出的表名\n" +
-            "3. 只返回纯 SQL 语句，不要包含任何解释、注释或 markdown 标记\n" +
-            "4. 如果需要时间范围，默认使用合理的时间区间（如最近7天、本月等）\n" +
-            "5. 金额字段使用 amount，时间字段使用 order_time\n" +
-            "6. 状态字段：订单状态 5=已完成，6=已取消，1=待付款，2=待接单\n" +
-            "7. 如果需要排序，默认按相关数值降序排列\n" +
-            "8. 对于可能返回大量结果的查询，使用 LIMIT 限制返回行数（默认 LIMIT 100）";
+            "2. 只使用上面列出的表名（orders, order_detail, dish, setmeal, category）\n" +
+            "3. 只使用表中列出的字段，禁止访问敏感字段（password, phone, address, id_number）\n" +
+            "4. 禁止使用 SELECT *，必须明确指定字段名\n" +
+            "5. 只返回纯 SQL 语句，不要包含任何解释、注释或 markdown 标记\n" +
+            "6. 只生成单条 SQL 语句，禁止多语句\n" +
+            "7. 如果需要时间范围，默认使用合理的时间区间（如最近7天、本月等）\n" +
+            "8. 金额字段使用 amount，时间字段使用 order_time\n" +
+            "9. 状态字段：订单状态 5=已完成，6=已取消，1=待付款，2=待接单\n" +
+            "10. 如果需要排序，默认按相关数值降序排列\n" +
+            "11. 对于可能返回大量结果的查询，使用 LIMIT 限制返回行数（默认 LIMIT 100）\n" +
+            "12. 禁止 UNION、WITH/CTE 等复杂结构";
 
     /**
      * System prompt：生成自然语言总结

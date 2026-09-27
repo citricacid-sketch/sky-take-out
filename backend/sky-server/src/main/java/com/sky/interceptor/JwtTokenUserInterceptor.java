@@ -42,8 +42,11 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        //1、从请求头中获取令牌
+        //1、从请求头中获取令牌，同时支持 query parameter（兼容模拟器/旧客户端）
         String token = request.getHeader(jwtProperties.getUserTokenName());
+        if (token == null || token.isEmpty()) {
+            token = request.getParameter("token");
+        }
 
         //2、校验令牌
         try {

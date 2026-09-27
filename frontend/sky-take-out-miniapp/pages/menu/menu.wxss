@@ -1,0 +1,181 @@
+/* pages/menu/menu.wxss */
+/* Modern warm takeaway menu — refined sidebar, elevated product rows. */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+}
+
+.menu-layout {
+  display: flex;
+  height: calc(100vh - 120rpx - env(safe-area-inset-bottom));
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 180rpx;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.side-item {
+  padding: 28rpx 16rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  position: relative;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.side-item.active {
+  background: linear-gradient(90deg, var(--color-primary-soft) 0%, rgba(254, 243, 199, 0.3) 100%);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.side-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6rpx;
+  height: 36rpx;
+  background: var(--gradient-primary);
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.side-item:active {
+  background: var(--color-primary-soft);
+}
+
+/* ---- Product list ---- */
+.product-area {
+  flex: 1;
+  height: 100%;
+  background: var(--color-surface);
+}
+
+.product-list {
+  padding: 0 var(--sp-lg);
+}
+
+.cat-head {
+  padding: var(--sp-lg) 0 var(--sp-md);
+}
+
+.cat-title {
+  font: var(--font-section-title);
+  color: var(--color-text);
+}
+
+/* ---- Product row ---- */
+.product-row {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-lg) 0;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.product-row:last-child {
+  border-bottom: none;
+}
+
+.prod-img-wrap {
+  width: 168rpx;
+  height: 168rpx;
+  margin-right: var(--sp-lg);
+  flex-shrink: 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.prod-img {
+  width: 100%;
+  height: 100%;
+  background: var(--color-border);
+  display: block;
+}
+
+.prod-img-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+}
+
+.ph-icon {
+  width: 64rpx;
+  height: 64rpx;
+  opacity: 0.65;
+}
+
+.prod-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-self: stretch;
+}
+
+.prod-name {
+  font: 600 30rpx/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prod-desc {
+  font: var(--font-secondary);
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: var(--sp-xs);
+}
+
+.prod-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--sp-sm);
+}
+
+.prod-price {
+  font: var(--font-price);
+  color: var(--color-primary);
+}
+
+.prod-add {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: var(--shadow-primary-sm);
+}
+
+.prod-add:active {
+  transform: scale(0.9);
+  background: var(--gradient-primary-active);
+}
+
+/* ---- Empty ---- */
+.empty-wrap {
+  padding-top: 120rpx;
+}
+
+.safe-bottom {
+  height: var(--sp-3xl);
+}

@@ -1,0 +1,77 @@
+<!-- pages/menu/menu.wxml -->
+<!-- MENU = full browsing. Left category sidebar + right flat product list. -->
+
+<view class="page">
+  <view class="menu-layout">
+    <!-- Left category sidebar -->
+    <scroll-view class="sidebar" scroll-y="{{true}}" enhanced="{{true}}">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="side-item {{activeCategory === item.id ? 'active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onCategorySelect"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- Right product list -->
+    <scroll-view class="product-area" scroll-y="{{true}}" enhanced="{{true}}">
+      <view wx:if="{{loading}}" class="pad">
+        <loading-skeleton />
+      </view>
+      <block wx:else>
+        <view wx:if="{{products.length}}" class="product-list">
+          <view class="cat-head">
+            <text class="cat-title">{{activeCategoryName}}</text>
+          </view>
+          <view
+            wx:for="{{products}}"
+            wx:key="id"
+            class="product-row"
+            data-id="{{item.id}}"
+            data-product="{{item}}"
+            bindtap="onProductTap"
+          >
+            <view class="prod-img-wrap">
+              <image
+                wx:if="{{item.hasImage}}"
+                class="prod-img"
+                src="{{item.image}}"
+                mode="aspectFill"
+                lazy-load="{{true}}"
+              />
+              <view wx:else class="prod-img prod-img-ph">
+                <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
+              </view>
+            </view>
+            <view class="prod-info">
+              <text class="prod-name">{{item.name}}</text>
+              <text wx:if="{{item.description}}" class="prod-desc">{{item.description}}</text>
+              <view class="prod-bottom">
+                <text class="prod-price">¥{{item.priceText}}</text>
+                <view class="prod-add" catchtap="onAddProduct" data-product="{{item}}">
+                  <text>+</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view wx:else class="pad">
+          <empty-state
+            symbolText="菜"
+            title="该分类暂无菜品"
+            actionText="去看看别的"
+            bind:action="onBrowseAll"
+          />
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

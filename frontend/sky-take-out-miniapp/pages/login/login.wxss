@@ -1,0 +1,64 @@
+/* pages/login/login.wxss */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: var(--sp-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand {
+  margin-top: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand-logo {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  font-weight: 800;
+  margin-bottom: var(--sp-xl);
+}
+
+.brand-name {
+  font: var(--font-page-title);
+  color: var(--color-text);
+  margin-bottom: var(--sp-sm);
+}
+
+.brand-sub {
+  font: var(--font-secondary);
+  color: var(--color-text-tertiary);
+}
+
+.actions {
+  margin-top: 160rpx;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-lg);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.tac {
+  margin-top: var(--sp-xl);
+  font: var(--font-caption);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.safe-bottom {
+  flex: 1;
+}

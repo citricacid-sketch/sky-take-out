@@ -1,0 +1,20 @@
+<!-- components/loading-skeleton/loading-skeleton.wxml -->
+<view class="skeleton">
+  <view class="sk-line sk-title" style="width:{{titleWidth}}%"></view>
+  <view class="sk-block">
+    <view class="sk-img"></view>
+    <view class="sk-content">
+      <view class="sk-line" style="width:70%"></view>
+      <view class="sk-line" style="width:50%"></view>
+      <view class="sk-line" style="width:30%"></view>
+    </view>
+  </view>
+  <view class="sk-block">
+    <view class="sk-img"></view>
+    <view class="sk-content">
+      <view class="sk-line" style="width:70%"></view>
+      <view class="sk-line" style="width:50%"></view>
+      <view class="sk-line" style="width:30%"></view>
+    </view>
+  </view>
+</view>

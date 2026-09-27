@@ -1,0 +1,142 @@
+<!-- pages/index/index.wxml -->
+<!-- HOMEPAGE = Product Decision Page.
+     Answers in order: Where am I? Is it open? What's worth eating? How do I start? -->
+
+<view class="page">
+  <!-- ===== Brand / Status hero ===== -->
+  <view class="hero">
+    <view class="hero-top">
+      <view class="brand-block">
+        <view class="brand-name">鲜味小厨</view>
+        <view class="brand-tag">新鲜现做 · 30分钟达</view>
+      </view>
+      <view class="status-pill {{shopOpen ? 'open' : 'closed'}}">
+        <view class="dot"></view>
+        <text>{{shopOpen ? '营业中' : '已打烊'}}</text>
+      </view>
+    </view>
+
+    <!-- Primary CTA -->
+    <view class="hero-cta" bindtap="onStartOrder">
+      <view class="cta-text">开始点餐</view>
+      <view class="cta-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- ===== Loading skeleton ===== -->
+  <view wx:if="{{loading}}" class="page-pad">
+    <loading-skeleton />
+  </view>
+
+  <block wx:else>
+    <!-- ===== Featured recommendation ribbon ===== -->
+    <view wx:if="{{featured.length}}" class="section">
+      <section-header title="为你推荐" actionText="更多" bind:action="onMoreFeatured" />
+      <scroll-view class="ribbon" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="ribbon-inner">
+          <view wx:for="{{featured}}" wx:key="id" class="ribbon-item">
+            <view class="rec-card" data-id="{{item.id}}" data-product="{{item}}" bindtap="onProductTap">
+              <view class="rec-img-wrap">
+                <image
+                  wx:if="{{item.hasImage}}"
+                  class="rec-img"
+                  src="{{item.image}}"
+                  mode="aspectFill"
+                  lazy-load="{{true}}"
+                />
+                <view wx:else class="rec-img rec-img-ph">
+                  <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
+                </view>
+                <view class="rec-info">
+                  <text class="rec-name">{{item.name}}</text>
+                  <text class="rec-price">¥{{item.priceText}}</text>
+                </view>
+                <view class="rec-add" catchtap="onAddProduct" data-product="{{item}}">
+                  <text>+</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- ===== Quick category pills ===== -->
+    <view wx:if="{{categories.length}}" class="section">
+      <section-header title="快速点餐" />
+      <scroll-view class="cat-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="cat-row">
+          <view
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="cat-pill"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+            bindtap="onCategoryTap"
+          >
+            {{item.name}}
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- ===== Hot dishes (2-column grid) ===== -->
+    <view wx:if="{{discovery.length}}" class="section">
+      <section-header
+        title="热销菜品"
+        subtitle="仅展示部分"
+        actionText="查看全部"
+        bind:action="onViewAll"
+      />
+      <view class="hot-grid">
+        <view
+          wx:for="{{discovery}}"
+          wx:key="id"
+          class="hot-card"
+          data-id="{{item.id}}"
+          data-product="{{item}}"
+          bindtap="onProductTap"
+        >
+          <view class="hot-img-wrap">
+            <image
+              wx:if="{{item.hasImage}}"
+              class="hot-img"
+              src="{{item.image}}"
+              mode="aspectFill"
+              lazy-load="{{true}}"
+            />
+            <view wx:else class="hot-img hot-img-ph">
+              <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
+            </view>
+          </view>
+          <view class="hot-info">
+            <text class="hot-name">{{item.name}}</text>
+            <view class="hot-bottom">
+              <text class="hot-price">¥{{item.priceText}}</text>
+              <view class="hot-add" catchtap="onAddProduct" data-product="{{item}}">
+                <text>+</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Empty fallback -->
+    <view wx:if="{{!featured.length && !discovery.length}}" class="page-pad">
+      <empty-state
+        symbolText="菜"
+        title="暂无菜品"
+        subtitle="商家正在准备美味，稍后再来吧"
+        actionText="刷新"
+        bind:action="loadData"
+      />
+    </view>
+  </block>
+
+  <!-- Bottom spacer for TabBar safe area -->
+  <view class="safe-bottom"></view>
+
+  <!-- AI Customer Service -->
+  <ai-chat />
+</view>

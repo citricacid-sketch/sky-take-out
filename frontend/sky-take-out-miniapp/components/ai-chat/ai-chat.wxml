@@ -1,0 +1,211 @@
+<!-- components/ai-chat/ai-chat.wxml -->
+<!-- Global AI customer service: small floating button + bottom-sheet chat panel. -->
+<!-- Supports two modes: 'service' (default) and 'ordering' (AI ordering assistant). -->
+
+<!-- Floating entrance: small pill button -->
+<view
+  class="ai-fab"
+  wx:if="{{!isOpen}}"
+  bindtap="onOpen"
+  hover-class="ai-fab-hover"
+>
+  <text class="ai-fab-text">✦ 客服</text>
+</view>
+
+<!-- Overlay + Chat panel -->
+<view wx:if="{{isOpen}}" class="ai-overlay" bindtap="onOverlayTap">
+  <view class="ai-panel" catchtap="onPanelTap">
+    <!-- Header with mode switch -->
+    <view class="ai-header">
+      <view class="ai-mode-switch">
+        <view
+          class="ai-mode-item {{mode === 'service' ? 'ai-mode-active' : ''}}"
+          data-mode="service"
+          bindtap="switchMode"
+        >智能客服</view>
+        <view
+          class="ai-mode-item {{mode === 'ordering' ? 'ai-mode-active' : ''}}"
+          data-mode="ordering"
+          bindtap="switchMode"
+        >帮我点餐</view>
+      </view>
+      <view class="ai-header-close" bindtap="onClose">×</view>
+    </view>
+
+    <!-- ==================== SERVICE MODE ==================== -->
+    <block wx:if="{{mode === 'service'}}">
+      <!-- Messages: scrollable area -->
+      <scroll-view
+        class="ai-messages"
+        scroll-y="{{true}}"
+        scroll-into-view="{{scrollToView}}"
+        enhanced="{{true}}"
+        show-scrollbar="{{false}}"
+      >
+        <view
+          wx:for="{{messages}}"
+          wx:key="id"
+          class="ai-msg {{item.role === 'user' ? 'ai-msg-user' : 'ai-msg-ai'}}"
+          id="{{item.id}}"
+        >
+          <!-- AI avatar -->
+          <view wx:if="{{item.role === 'assistant'}}" class="ai-avatar ai-avatar-ai">
+            <text>✦</text>
+          </view>
+          <!-- Bubble -->
+          <view class="ai-bubble {{item.role === 'user' ? 'ai-bubble-user' : 'ai-bubble-ai'}} {{item.status === 'sending' ? 'ai-bubble-loading' : ''}}">
+            <text wx:if="{{item.status === 'sending'}}" class="ai-dots"><text>·</text><text>·</text><text>·</text></text>
+            <text wx:else>{{item.content}}</text>
+          </view>
+          <!-- User avatar -->
+          <view wx:if="{{item.role === 'user'}}" class="ai-avatar ai-avatar-user">
+            <text>我</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- Quick questions (only when no user messages yet, and not loading) -->
+      <view class="ai-quick" wx:if="{{messages.length <= 1 && !loading}}">
+        <view class="ai-quick-list">
+          <view class="ai-quick-item" data-q="查我的订单" bindtap="onQuickQuestion">查我的订单</view>
+          <view class="ai-quick-item" data-q="配送要多久？" bindtap="onQuickQuestion">配送要多久？</view>
+          <view class="ai-quick-item" data-q="推荐几个菜" bindtap="onQuickQuestion">推荐几个菜</view>
+          <view class="ai-quick-item" data-q="怎么申请售后？" bindtap="onQuickQuestion">怎么申请售后？</view>
+        </view>
+      </view>
+
+      <!-- Input: fixed at bottom -->
+      <view class="ai-input-row">
+        <input
+          class="ai-input"
+          placeholder="输入问题"
+          value="{{inputValue}}"
+          bindinput="onInput"
+          bindconfirm="onSend"
+          confirm-type="send"
+          maxlength="200"
+          disabled="{{loading}}"
+        />
+        <view class="ai-send {{loading ? 'ai-send-disabled' : ''}}" bindtap="onSend">
+          <text>发送</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- ==================== ORDERING MODE ==================== -->
+    <block wx:elif="{{mode === 'ordering'}}">
+      <!-- Ordering content: scrollable -->
+      <scroll-view
+        class="ai-ordering-scroll"
+        scroll-y="{{true}}"
+        enhanced="{{true}}"
+        show-scrollbar="{{false}}"
+      >
+        <view class="ai-ordering-content">
+          <view class="ai-ordering-title">今天想怎么吃？</view>
+
+          <!-- Quick conditions -->
+          <view class="ai-ordering-section">
+            <view class="ai-ordering-label">人数</view>
+            <view class="ai-ordering-chips">
+              <view class="ai-chip" data-q="一人" bindtap="onOrderingQuick">一人</view>
+              <view class="ai-chip" data-q="两人" bindtap="onOrderingQuick">两人</view>
+              <view class="ai-chip" data-q="三人以上" bindtap="onOrderingQuick">三人以上</view>
+            </view>
+          </view>
+
+          <view class="ai-ordering-section">
+            <view class="ai-ordering-label">预算</view>
+            <view class="ai-ordering-chips">
+              <view class="ai-chip" data-q="30元以内" bindtap="onOrderingQuick">30元以内</view>
+              <view class="ai-chip" data-q="50元以内" bindtap="onOrderingQuick">50元以内</view>
+              <view class="ai-chip" data-q="80元以内" bindtap="onOrderingQuick">80元以内</view>
+            </view>
+          </view>
+
+          <view class="ai-ordering-section">
+            <view class="ai-ordering-label">口味</view>
+            <view class="ai-ordering-chips">
+              <view class="ai-chip" data-q="想吃辣" bindtap="onOrderingQuick">想吃辣</view>
+              <view class="ai-chip" data-q="清淡一点" bindtap="onOrderingQuick">清淡一点</view>
+              <view class="ai-chip" data-q="不知道吃什么" bindtap="onOrderingQuick">不知道吃什么</view>
+            </view>
+          </view>
+
+          <view class="ai-ordering-example">例如："两个人，50元以内，想吃辣"</view>
+
+          <!-- Recommendations result -->
+          <block wx:if="{{orderingRecommendations.length > 0}}">
+            <view class="ai-ordering-result-title">为你搭配了一份 {{orderingIntent.meal === 'dinner' ? '晚餐' : orderingIntent.meal === 'lunch' ? '午餐' : '餐'}}</view>
+
+            <view wx:if="{{orderingExplanation}}" class="ai-ordering-explanation">{{orderingExplanation}}</view>
+
+            <view class="ai-ordering-list">
+              <view wx:for="{{orderingRecommendations}}" wx:key="dishId" class="ai-ordering-item">
+                <view class="ai-ordering-item-left">
+                  <image
+                    wx:if="{{item.dish.image}}"
+                    class="ai-ordering-item-img"
+                    src="{{item.dish.image}}"
+                    mode="aspectFill"
+                  />
+                  <view wx:else class="ai-ordering-item-img ai-ordering-item-img-ph">
+                    <text>🍽</text>
+                  </view>
+                  <view class="ai-ordering-item-info">
+                    <text class="ai-ordering-item-name">{{item.dish.name}}</text>
+                    <view wx:if="{{item.requiresFlavor}}" class="ai-ordering-item-flavor-hint">需选择规格</view>
+                    <view class="ai-ordering-item-reasons">
+                      <text wx:for="{{item.matchedReasons}}" wx:for-item="reason" wx:key="*this" class="ai-ordering-reason">{{reason}}</text>
+                    </view>
+                  </view>
+                </view>
+                <view class="ai-ordering-item-right">
+                  <text class="ai-ordering-item-price">¥{{item.unitPrice}}</text>
+                  <text class="ai-ordering-item-qty">×{{item.quantity}}</text>
+                  <view wx:if="{{item.requiresFlavor}}" class="ai-ordering-item-action" data-dish="{{item.dish}}" bindtap="onViewDish">选择规格</view>
+                  <view wx:else class="ai-ordering-item-action ai-ordering-item-action-add" data-dish="{{item.dish}}" bindtap="onAddSingle">直接加入</view>
+                </view>
+              </view>
+            </view>
+
+            <view class="ai-ordering-summary">
+              <view class="ai-ordering-summary-row">
+                <text class="ai-ordering-total">合计 ¥{{orderingSubtotal}}</text>
+                <text wx:if="{{hasFlavorItems}}" class="ai-ordering-note">* 部分菜品需选择规格后确认</text>
+              </view>
+              <view class="ai-ordering-actions">
+                <view class="ai-ordering-btn ai-ordering-btn-secondary" bindtap="onOrderingSubmit">重新搭配</view>
+                <view class="ai-ordering-btn ai-ordering-btn-primary" bindtap="onAddToCart">加入可直接加入的菜品</view>
+              </view>
+            </view>
+          </block>
+
+          <block wx:elif="{{orderingLoading}}">
+            <view class="ai-ordering-loading">
+              <view class="ai-ordering-loading-dots"><text class="dot">·</text><text class="dot">·</text><text class="dot">·</text></view>
+              <text>正在为你搭配...</text>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
+
+      <!-- Ordering input: fixed at bottom -->
+      <view class="ai-input-row">
+        <input
+          class="ai-input"
+          placeholder="输入你的需求，如：两个人，50元以内，想吃辣"
+          value="{{orderingIntent.rawText || ''}}"
+          bindinput="onOrderingInput"
+          bindconfirm="onOrderingSubmit"
+          confirm-type="send"
+          maxlength="200"
+          disabled="{{orderingLoading}}"
+        />
+        <view class="ai-send {{orderingLoading ? 'ai-send-disabled' : ''}}" bindtap="onOrderingSubmit">
+          <text>发送</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>
