@@ -38,9 +38,15 @@ public class AiServiceClient {
     private final AiServiceProperties properties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /** 构造客户端（使用默认 RestTemplate）。 */
     public AiServiceClient(AiServiceProperties properties) {
+        this(properties, new RestTemplate());
+    }
+
+    /** 构造客户端（注入 RestTemplate，用于测试）。 */
+    public AiServiceClient(AiServiceProperties properties, RestTemplate restTemplate) {
         this.properties = properties;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     /** 判断当前是否为 Python provider。 */
@@ -117,14 +123,18 @@ public class AiServiceClient {
 
     // ===== internal =====
 
-    /** 从响应中提取 reply 字段。 */
+    /** 从响应中提取文本字段（兼容 reply / answer）。 */
     private String postForText(String path, Map<String, Object> body, String traceId) {
         Map<String, Object> resp = postForMap(path, body, traceId);
         if (resp == null) {
             return null;
         }
-        Object reply = resp.get("reply");
-        return reply == null ? null : reply.toString();
+        // 兼容 chat 端点（reply）和 analysis 端点（answer）
+        Object text = resp.get("reply");
+        if (text == null) {
+            text = resp.get("answer");
+        }
+        return text == null ? null : text.toString();
     }
 
     /**
