@@ -15,7 +15,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 智能客服服务实现 — 委托给 Python AI 服务，并注入用户上下文。
+ * 智能客服服务实现。
+ *
+ * <p>职责：</p>
+ * <ol>
+ *   <li>校验输入（空消息拦截）</li>
+ *   <li>构造用户上下文（最近 3 笔订单 + 店铺状态）</li>
+ *   <li>调用 Python ai-service /api/v1/chat</li>
+ *   <li>失败降级（返回友好提示）</li>
+ * </ol>
+ *
+ * <p>上下文注入让 AI 能回答"我的订单到哪了"等个性化问题。</p>
  */
 @Service
 @Slf4j
@@ -40,7 +50,7 @@ public class ChatServiceImpl implements ChatService {
             return "AI 客服暂不可用，请稍后再试。";
         }
 
-        // 构造带上下文的 body
+        // 构造带上下文的 body（userId + message + context）
         Map<String, Object> body = new HashMap<>();
         body.put("userId", String.valueOf(userId));
         body.put("message", message);
@@ -56,6 +66,11 @@ public class ChatServiceImpl implements ChatService {
 
     /**
      * 构造用户上下文：最近 3 笔订单 + 店铺状态。
+     *
+     * <p>异常不影响主流程（降级为无上下文）。</p>
+     *
+     * @param userId 用户 ID
+     * @return context Map（可能包含 recentOrders / shopStatus）
      */
     private Map<String, Object> buildContext(Long userId) {
         Map<String, Object> context = new HashMap<>();
