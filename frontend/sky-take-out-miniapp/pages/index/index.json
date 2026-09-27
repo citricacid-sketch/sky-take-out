@@ -9,6 +9,7 @@
     "loading-skeleton": "/components/loading-skeleton/loading-skeleton",
     "empty-state": "/components/empty-state/empty-state",
     "section-header": "/components/section-header/section-header",
-    "product-card": "/components/product-card/product-card"
+    "product-card": "/components/product-card/product-card",
+    "scroll-to-top": "/components/scroll-to-top/scroll-to-top"
   }
 }

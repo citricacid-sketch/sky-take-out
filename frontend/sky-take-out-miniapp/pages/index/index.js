@@ -154,4 +154,9 @@ Page({
       // request.js already surfaces a toast on failure
     }
   },
+
+  /** 页面滚动事件：传递给 scroll-to-top 组件 */
+  onPageScroll(e) {
+    this.setData({ scrollTop: e.scrollTop });
+  },
 });

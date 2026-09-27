@@ -20,7 +20,9 @@
   border-radius: 12rpx;
   margin-right: 20rpx;
   flex-shrink: 0;
-  background: var(--color-border);
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 .sk-content {
@@ -33,8 +35,10 @@
 .sk-line {
   height: 28rpx;
   border-radius: 8rpx;
-  background: var(--color-border);
   margin-bottom: 16rpx;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 .sk-line:last-child {

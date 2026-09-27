@@ -139,4 +139,7 @@
 
   <!-- AI Customer Service -->
   <ai-chat />
+
+  <!-- Scroll to Top -->
+  <scroll-to-top bind:scroll="onPageScroll" />
 </view>
