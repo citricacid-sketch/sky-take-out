@@ -46,7 +46,7 @@
 
 <!-- COMPACT mode: small row, used in cart / order detail -->
 <view wx:if="{{mode === 'compact'}}" class="card-compact">
-  <image class="img-compact" src="{{product.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImageErrorCompact" />
+  <image wx:if="{{product.image}}" class="img-compact" src="{{product.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImageErrorCompact" />
   <view wx:else class="img-placeholder img-placeholder-compact">
     <image class="ph-icon" src="/assets/icons/dish.svg" mode="aspectFit" />
   </view>

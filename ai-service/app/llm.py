@@ -27,19 +27,28 @@ class LongCatLLM:
         self.client = httpx.AsyncClient(timeout=60)
 
     async def ainvoke(self, messages: list[Any]) -> Any:
-        """调用 LLM，返回 AIMessage-like 对象。"""
+        """调用 LLM，返回 AIMessage-like 对象。
+
+        Args:
+            messages: langchain_core.messages.BaseMessage 列表。
+
+        Returns:
+            _AIMessage 对象，有 content 和 tool_calls 属性。
+        """
         # 转换 langchain messages 到 Anthropic 格式
         anthropic_messages = []
         system_content = None
         for msg in messages:
-            if msg.__class__.__name__ == "SystemMessage":
+            cls_name = msg.__class__.__name__
+            if cls_name == "SystemMessage":
+                # System 单独提取，不放入 messages 数组
                 system_content = msg.content
-            elif msg.__class__.__name__ == "HumanMessage":
+            elif cls_name == "HumanMessage":
                 anthropic_messages.append({"role": "user", "content": msg.content})
-            elif msg.__class__.__name__ == "AIMessage":
+            elif cls_name == "AIMessage":
                 anthropic_messages.append({"role": "assistant", "content": msg.content})
-            elif msg.__class__.__name__ == "ToolMessage":
-                # Tool messages 转为 user messages
+            elif cls_name == "ToolMessage":
+                # LongCat 不支持 tool role，转为 user 消息
                 anthropic_messages.append({"role": "user", "content": f"[Tool Result] {msg.content}"})
 
         payload: dict[str, Any] = {
