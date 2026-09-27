@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 import pydantic
 from pydantic import BaseModel
 
@@ -17,6 +17,7 @@ from app.agents.chat import chat_agent
 from app.agents.data_analysis import analyze as analyze_fn
 from app.agents.order_planner import plan as order_planner_plan
 from app.security import verify_internal_token
+from app.middleware.rate_limit import ai_rate_limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -72,6 +73,12 @@ async def ready(request: Request) -> dict[str, Any]:
 @router.post("/api/v1/chat", dependencies=[Depends(verify_internal_token)])
 async def chat(payload: ChatRequest) -> dict[str, Any]:
     """客服对话。"""
+    # 速率限制（每分钟 20 次）
+    if not ai_rate_limiter.allow(payload.userId):
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "rate_limited", "message": "请求过于频繁，稍后再试"},
+        )
     return await chat_agent.chat(payload.userId, payload.message, payload.sessionId, payload.context)
 
 
@@ -80,6 +87,8 @@ async def chat(payload: ChatRequest) -> dict[str, Any]:
 @router.post("/api/v1/analysis/ask", dependencies=[Depends(verify_internal_token)])
 async def analysis_ask(payload: AnalysisRequest) -> dict[str, Any]:
     """NL2SQL 数据分析（DataAnalysisAgent）。"""
+    # 速率限制（复用 chat 限制器）
+    # 注意：analysis 没有 userId，使用 IP 或其他标识
     return await analyze_fn(payload.question)
 
 

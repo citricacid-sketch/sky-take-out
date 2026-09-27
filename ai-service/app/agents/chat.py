@@ -46,6 +46,7 @@ from redis import Redis
 from app.config import settings
 from app.db import execute_readonly
 from app.llm import get_chat_llm
+from app.cache.response_cache import response_cache
 
 logger = logging.getLogger(__name__)
 
@@ -428,6 +429,13 @@ class ChatAgent:
         messages.extend(history)
         messages.append(HumanMessage(content=message))
 
+        # 2.5 缓存查询：通用问题（无订单号/个性化信息）走缓存，减少 LLM 调用
+        if response_cache.is_cacheable(message):
+            cached = response_cache.get(message)
+            if cached:
+                logger.info("缓存命中: %s", message[:30])
+                return {"reply": cached, "session_id": session_id}
+
         # 3. 工具调用循环：LLM 与工具多轮交互，直到无 tool_calls 或达到最大轮次
         try:
             reply = await self._tool_loop(messages)
@@ -438,6 +446,10 @@ class ChatAgent:
 
         # 4. 更新记忆：保存本轮完整消息（跳过 index 0 的 system message）
         self._save_history(user_id, session_id, messages[1:])  # 不存 system
+
+        # 4.5 缓存写入：成功的通用问题响应写入缓存
+        if response_cache.is_cacheable(message) and not reply.startswith("抱歉"):
+            response_cache.set(message, reply)
 
         return {"reply": reply, "session_id": session_id}
 
