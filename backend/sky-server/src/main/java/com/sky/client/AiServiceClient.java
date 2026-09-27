@@ -7,8 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import java.util.Map;
 
 /**
  * Python AI 服务 HTTP 客户端。
- * 封装 chat / analysis / order-plan 三个端点，含超时、traceId、降级。
  */
 @Slf4j
 public class AiServiceClient {
@@ -29,16 +27,15 @@ public class AiServiceClient {
     private final AiServiceProperties properties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AiServiceClient(RestTemplate restTemplate, AiServiceProperties properties) {
-        this.restTemplate = restTemplate;
+    public AiServiceClient(AiServiceProperties properties) {
         this.properties = properties;
+        this.restTemplate = new RestTemplate();
     }
 
-    /**
-     * 客服对话。
-     *
-     * @return reply, 失败返回 null (由调用方降级)
-     */
+    public boolean isPythonProvider() {
+        return "python".equalsIgnoreCase(properties.getProvider());
+    }
+
     public String chat(String userId, String message, String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", userId);
@@ -46,22 +43,12 @@ public class AiServiceClient {
         return postForText(PATH_CHAT, body, traceId);
     }
 
-    /**
-     * NL2SQL 数据分析。
-     *
-     * @return 中文总结, 失败返回 null
-     */
     public String analysisAsk(String question, String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("question", question);
         return postForText(PATH_ANALYSIS, body, traceId);
     }
 
-    /**
-     * 点餐推荐。
-     *
-     * @return JSON 字符串, 失败返回 null
-     */
     public String orderPlan(int people, double budget, String tastesJson, String excludesJson, String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("people", people);
@@ -80,14 +67,6 @@ public class AiServiceClient {
         }
     }
 
-    public boolean isPythonProvider() {
-        return "python".equalsIgnoreCase(properties.getProvider());
-    }
-
-    public String getProvider() {
-        return properties.getProvider();
-    }
-
     // ===== internal =====
 
     private String postForText(String path, Map<String, Object> body, String traceId) {
@@ -101,30 +80,31 @@ public class AiServiceClient {
 
     private Map<String, Object> postForMap(String path, Map<String, Object> body, String traceId) {
         String url = properties.getUrl() + path;
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (properties.getToken() != null && !properties.getToken().isEmpty()) {
-            headers.set("Authorization", properties.getToken());
-        }
+        // 始终发送 token（无论是否为空，Python 端会处理）
+        headers.set("X-Internal-Token", properties.getToken());
         if (traceId != null) {
             headers.set("X-Trace-Id", traceId);
         }
+
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
-            log.info("AiServiceClient 调用 {} (traceId={})", path, traceId);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            log.info("AiServiceClient 调用 {} token={}", path, properties.getToken());
+            var response = restTemplate.postForEntity(url, entity, String.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {
+                return objectMapper.readValue(response.getBody(), new TypeReference<>() {
                 });
             }
             log.warn("AiServiceClient {} 返回非 2xx: {}", path, response.getStatusCode());
             return null;
-        } catch (ResourceAccessException e) {
-            log.error("AiServiceClient {} 网络异常 (traceId={}): {}", path, traceId, e.getMessage());
+        } catch (RestClientException e) {
+            log.error("AiServiceClient {} 调用失败: {}", path, e.getMessage());
             return null;
         } catch (Exception e) {
-            log.error("AiServiceClient {} 调用失败 (traceId={})", path, traceId, e);
+            log.error("AiServiceClient {} 解析失败", path, e);
             return null;
         }
     }
@@ -134,7 +114,7 @@ public class AiServiceClient {
             return new java.util.ArrayList<>();
         }
         try {
-            return objectMapper.readValue(json, new TypeReference<Object>() {
+            return objectMapper.readValue(json, new TypeReference<>() {
             });
         } catch (Exception e) {
             log.warn("解析 JSON 数组失败: {}", json, e);

@@ -76,7 +76,7 @@ sky:
       # Python AI 服务地址
       url: ${AI_SERVICE_URL:http://127.0.0.1:8000}
       # 内部认证令牌（与 Python AI_SERVICE_TOKEN 保持一致）
-      token: ${AI_SERVICE_TOKEN:}
+      token: ${AI_SERVICE_TOKEN:sky_take_out_dev_token_2026}
       # 调用超时（毫秒），LLM 通常 5-30s
       timeout: ${AI_SERVICE_TIMEOUT:30000}
 
