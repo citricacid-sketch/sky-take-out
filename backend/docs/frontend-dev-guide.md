@@ -10,7 +10,7 @@
 ```
 sky-take-out/                      ← git 仓库根
 ├── backend/                       ← Spring Boot 后端（本手册调研对象）
-│   ├── sky-common/                ← 常量/工具/统一返回/JWT/OSS/LLM 客户端
+│   ├── sky-common/                ← 常量/工具/统一返回/JWT/OSS
 │   ├── sky-pojo/                  ← DTO(24) / Entity(14) / VO(22)
 │   └── sky-server/                ← 唯一可运行模块：controller/service/mapper/task/websocket
 ├── frontend/
@@ -18,7 +18,7 @@ sky-take-out/                      ← git 仓库根
 └── (frontend/sky-miniapp 已删除)  ← 用户端小程序（uni-app），待重建
 ```
 
-**后端技术栈**：Spring Boot 2.7.3 / JDK 17 / MyBatis 2.2.0 + PageHelper 1.4.6 / Druid / MySQL / Redis（缓存+会话）/ WebSocket（javax.websocket 原生）/ Knife4j 3.0.2 / 阿里云 OSS / 百度地图 API / OpenAI 兼容 LLM
+**后端技术栈**：Spring Boot 2.7.3 / JDK 17 / MyBatis 2.2.0 + PageHelper 1.4.6 / Druid / MySQL / Redis（缓存+会话）/ WebSocket（javax.websocket 原生）/ Knife4j 3.0.2 / 阿里云 OSS / 百度地图 API。AI 功能由 Python ai-service（LangChain）提供。
 
 **原小程序页面结构**（重建时可参考，来自被删的 sky-miniapp）：
 - TabBar 3 个：首页(index) / 订单(order-list) / 我的(profile)
@@ -361,11 +361,11 @@ OrderStatisticsVO：`toBeConfirmed`(待接单)、`confirmed`(待派送)、`deliv
 - body：`{"message": "..."}`；响应：`Result<String>` 纯文本
 - 会话历史存 Redis（30 分钟 TTL，最多 20 条），前端聊天页刷新后可继续上下文
 - 后端自动注入最近 3 笔订单 + 店铺状态作为上下文
-- **依赖 `LLM_API_KEY` 环境变量**（OpenAI 兼容协议，默认模型 gpt-4o-mini），未配置时调用会失败
+- **依赖 Python ai-service**（默认 `http://127.0.0.1:8000`），通过 `AiServiceClient` 调用
 - 同步阻塞调用（LLM 超时 30s），**前端 axios/uni.request 超时要设 >30s**，或加 loading 动画
 
 ### 7.3 数据助手（管理端）`POST /admin/ai/ask`
-body `{"question": "..."}` → String 分析结论。LLM 生成只读 SQL（表白名单 7 张）→ 执行 → LLM 总结。同样依赖 LLM_API_KEY。
+body `{"question": "..."}` → String 分析结论。Java 通过 `AiServiceClient` 调用 Python ai-service，Python 端完成 NL2SQL（sqlglot 安全校验 + 表白名单 5 张表）→ 执行 → LLM 总结。同样依赖 Python 服务的 `LLM_API_KEY`。
 
 ### 7.4 配送追踪 `GET /user/delivery/{orderId}`
 - 返回 DeliveryVO（含骑手姓名/电话/实时经纬度），**HTTP 轮询**获取位置（建议 3~5s 间隔）
@@ -380,7 +380,7 @@ body `{"question": "..."}` → String 分析结论。LLM 生成只读 SQL（表�
 |---|---|
 | MySQL | `localhost:3306/sky_take_out`（root / XS971818） |
 | Redis | `localhost:6379`，密码 XS971818，database 0 |
-| LLM（可选） | 环境变量 `LLM_API_KEY`（必需）、`LLM_BASE_URL`（默认 https://api.openai.com/v1/chat/completions）、`LLM_MODEL`（默认 gpt-4o-mini） |
+| LLM（可选，Python） | 环境变量 `LLM_API_KEY`（必需）、`LLM_BASE_URL`（默认 https://longcat.chat/v1）、`LLM_MODEL`（默认 Longcat-Flash-Chat） |
 | 后端启动 | IDE 运行 `sky-server` 的 `SkyApplication`；或 `mvn spring-boot:run -pl sky-server`。构建需 `-Dlombok=1.18.46`（JDK 高版本兼容） |
 | 管理端启动 | `cd frontend/sky-admin-web && npm i && npm run dev`（端口 5173，已配 /api 代理） |
 
