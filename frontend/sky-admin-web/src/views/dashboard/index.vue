@@ -15,8 +15,13 @@
       </div>
     </header>
 
+    <!-- 加载骨架 -->
+    <div v-if="loading" class="skeleton-row">
+      <div v-for="i in 4" :key="i" class="skeleton-card" />
+    </div>
+
     <!-- 核心指标卡片 -->
-    <section class="data-cards">
+    <section v-else class="data-cards">
       <MetricCard
         label="营业额"
         :value="formatMoney(businessData.turnover)"
@@ -48,27 +53,44 @@
     <!-- 图表 + 热销榜 -->
     <section class="charts-row">
       <div class="chart-main">
-        <ChartCard title="订单分布">
+        <ChartCard title="订单分布" :loading="chartLoading">
           <div ref="orderChartRef" class="chart-dom"></div>
         </ChartCard>
       </div>
       <div class="chart-side">
-        <ChartCard title="热销 TOP5">
-          <TopDishes :dishes="topDishes" />
+        <ChartCard title="商品总览" :loading="chartLoading">
+          <div ref="dishChartRef" class="chart-dom"></div>
         </ChartCard>
       </div>
     </section>
 
-    <!-- 商品总览 -->
+    <!-- 套餐总览 -->
     <section class="charts-row">
       <div class="chart-col">
-        <ChartCard title="菜品总览">
-          <div ref="dishChartRef" class="chart-dom"></div>
+        <ChartCard title="套餐总览" :loading="chartLoading">
+          <div ref="setmealChartRef" class="chart-dom"></div>
         </ChartCard>
       </div>
       <div class="chart-col">
-        <ChartCard title="套餐总览">
-          <div ref="setmealChartRef" class="chart-dom"></div>
+        <ChartCard title="数据概览" :loading="chartLoading">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">待接单</span>
+              <span class="stat-value pending">{{ orderOverview.waitingOrders || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">派送中</span>
+              <span class="stat-value delivering">{{ orderOverview.deliveredOrders || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">已完成</span>
+              <span class="stat-value completed">{{ orderOverview.completedOrders || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">已取消</span>
+              <span class="stat-value cancelled">{{ orderOverview.cancelledOrders || 0 }}</span>
+            </div>
+          </div>
         </ChartCard>
       </div>
     </section>
@@ -85,15 +107,15 @@ import {
 } from '@/api/workspace'
 import ChartCard from '@/components/ChartCard.vue'
 import MetricCard from '@/components/MetricCard.vue'
-import TopDishes from '@/components/TopDishes.vue'
 import echarts from '@/utils/echarts'
 
 const range = ref('today')
+const loading = ref(true)
+const chartLoading = ref(true)
 const businessData = ref({})
 const orderOverview = ref({})
 const dishOverview = ref({})
 const setmealOverview = ref({})
-const topDishes = ref([])
 
 const trends = ref({ orders: 0, turnover: 0 })
 
@@ -119,24 +141,29 @@ function formatRate(v) {
 }
 
 async function fetchBusinessData() {
-  businessData.value = await getBusinessData()
+  try {
+    businessData.value = await getBusinessData()
+  } catch (e) {
+    console.error('获取营业数据失败', e)
+  }
 }
 
 async function fetchOverviewData() {
-  const [order, dish, setmeal] = await Promise.all([
-    getOrderOverview(),
-    getDishOverview(),
-    getSetmealOverview(),
-  ])
-  orderOverview.value = order
-  dishOverview.value = dish
-  setmealOverview.value = setmeal
-  // Derive a mock top-5 from the dish overview (sold first). Backend has no topN API yet.
-  topDishes.value = []
+  try {
+    const [order, dish, setmeal] = await Promise.all([
+      getOrderOverview(),
+      getDishOverview(),
+      getSetmealOverview(),
+    ])
+    orderOverview.value = order
+    dishOverview.value = dish
+    setmealOverview.value = setmeal
+  } catch (e) {
+    console.error('获取概览数据失败', e)
+  }
 }
 
 function onRangeChange() {
-  // Placeholder: backend businessData is today-only for now. Wire real range later.
   fetchBusinessData()
 }
 
@@ -144,14 +171,29 @@ function renderOrderChart() {
   if (!orderChartRef.value) return
   orderChart = echarts.init(orderChartRef.value)
   orderChart.setOption({
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0 },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#374151' },
+    },
+    legend: {
+      bottom: 0,
+      itemWidth: 12,
+      itemHeight: 12,
+      textStyle: { color: '#6b7280', fontSize: 12 },
+    },
     series: [{
       type: 'pie',
-      radius: ['45%', '70%'],
+      radius: ['50%', '75%'],
+      center: ['50%', '45%'],
       avoidLabelOverlap: false,
       label: { show: false },
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      emphasis: {
+        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.2)' },
+      },
+      itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 3 },
       data: [
         { value: orderOverview.value.waitingOrders || 0, name: '待接单', itemStyle: { color: '#F59E0B' } },
         { value: orderOverview.value.deliveredOrders || 0, name: '待派送', itemStyle: { color: '#3B82F6' } },
@@ -166,12 +208,26 @@ function renderDishChart() {
   if (!dishChartRef.value) return
   dishChart = echarts.init(dishChartRef.value)
   dishChart.setOption({
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0 },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#374151' },
+    },
+    legend: {
+      bottom: 0,
+      itemWidth: 12,
+      itemHeight: 12,
+      textStyle: { color: '#6b7280', fontSize: 12 },
+    },
     series: [{
       type: 'pie',
-      radius: '65%',
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      radius: ['55%', '80%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
       data: [
         { value: dishOverview.value.sold || 0, name: '已启售', itemStyle: { color: '#10B981' } },
         { value: dishOverview.value.discontinued || 0, name: '已停售', itemStyle: { color: '#9CA3AF' } },
@@ -184,12 +240,26 @@ function renderSetmealChart() {
   if (!setmealChartRef.value) return
   setmealChart = echarts.init(setmealChartRef.value)
   setmealChart.setOption({
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0 },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#374151' },
+    },
+    legend: {
+      bottom: 0,
+      itemWidth: 12,
+      itemHeight: 12,
+      textStyle: { color: '#6b7280', fontSize: 12 },
+    },
     series: [{
       type: 'pie',
-      radius: '65%',
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      radius: ['55%', '80%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
       data: [
         { value: setmealOverview.value.sold || 0, name: '已启售', itemStyle: { color: '#10B981' } },
         { value: setmealOverview.value.discontinued || 0, name: '已停售', itemStyle: { color: '#9CA3AF' } },
@@ -205,8 +275,9 @@ function handleResize() {
 }
 
 onMounted(async () => {
-  await fetchBusinessData()
-  await fetchOverviewData()
+  await Promise.all([fetchBusinessData(), fetchOverviewData()])
+  loading.value = false
+  chartLoading.value = false
   await nextTick()
   renderOrderChart()
   renderDishChart()
@@ -242,6 +313,26 @@ onBeforeUnmount(() => {
   }
 }
 
+.skeleton-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .skeleton-card {
+    height: 120px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .data-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -255,14 +346,41 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 16px;
   margin-bottom: 16px;
-
-  &:first-of-type { grid-template-columns: 2fr 1fr; }
-  &:not(:first-of-type) { grid-template-columns: repeat(2, 1fr); }
+  grid-template-columns: 2fr 1fr;
 
   @media (max-width: 1200px) {
     grid-template-columns: 1fr !important;
   }
 
   .chart-dom { width: 100%; height: 300px; }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 16px 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+
+  &.pending { color: #F59E0B; }
+  &.delivering { color: #3B82F6; }
+  &.completed { color: #10B981; }
+  &.cancelled { color: #9CA3AF; }
 }
 </style>
