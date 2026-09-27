@@ -6,6 +6,7 @@ import logging
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Request
+import pydantic
 from pydantic import BaseModel
 
 from app.agents.chat import chat_agent
@@ -21,10 +22,18 @@ class ChatRequest(BaseModel):
     userId: str
     message: str
     sessionId: Optional[str] = None
+    context: Optional[dict[str, Any]] = None
 
 
 class AnalysisRequest(BaseModel):
     question: str
+
+    @pydantic.field_validator("question")
+    @classmethod
+    def question_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("question 不能为空")
+        return v
 
 
 class OrderPlanRequest(BaseModel):
@@ -55,7 +64,7 @@ async def ready(request: Request) -> dict[str, Any]:
 @router.post("/api/v1/chat", dependencies=[Depends(verify_internal_token)])
 async def chat(payload: ChatRequest) -> dict[str, Any]:
     """客服对话。"""
-    return await chat_agent.chat(payload.userId, payload.message, payload.sessionId)
+    return await chat_agent.chat(payload.userId, payload.message, payload.sessionId, payload.context)
 
 
 # --- DataAnalysisAgent ---

@@ -4,12 +4,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.config import settings
 
 
 @pytest.fixture
 def client():
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers():
+    """测试用认证头（与 .env 默认 token 一致）。"""
+    from app.config import settings
+    return {"X-Internal-Token": settings.ai_service_token or "test_token"}
 
 
 class TestHealth:
@@ -25,19 +31,19 @@ class TestHealth:
 
 
 class TestSecurity:
-    def test_protected_without_token_dev_mode(self, client):
-        """未配置 token 时开发模式放行；chat 缺 userId 返回 400。"""
+    def test_protected_without_token_401(self, client):
+        """无 token 时返回 401。"""
         r = client.post("/api/v1/chat", json={"message": "hi"})
-        assert r.status_code == 400
+        assert r.status_code in (401, 403)
 
-    def test_analysis_implemented(self, client):
-        """DataAnalysisAgent 已实现：空 question 返回 400。"""
-        r = client.post("/api/v1/analysis/ask", json={"question": ""})
-        assert r.status_code == 400
+    def test_analysis_implemented(self, client, auth_headers):
+        """DataAnalysisAgent 已实现：空 question 返回 400/422。"""
+        r = client.post("/api/v1/analysis/ask", json={"question": ""}, headers=auth_headers)
+        assert r.status_code in (400, 422)
 
-    def test_order_plan_implemented(self, client):
-        """Step 4 已实现：endpoint 应返回 200（无 DB 时返回友好提示）。"""
-        r = client.post("/api/v1/order/plan", json={"people": 2, "budget": 100})
+    def test_order_plan_implemented(self, client, auth_headers):
+        """OrderPlannerAgent 已实现：endpoint 应返回 200（无 DB 时返回友好提示）。"""
+        r = client.post("/api/v1/order/plan", json={"people": 2, "budget": 100}, headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert "items" in body

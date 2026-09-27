@@ -43,6 +43,10 @@ public class AiServiceClient {
         return postForText(PATH_CHAT, body, traceId);
     }
 
+    public String chatWithBody(Map<String, Object> body, String traceId) {
+        return postForText(PATH_CHAT, body, traceId);
+    }
+
     public String analysisAsk(String question, String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("question", question);

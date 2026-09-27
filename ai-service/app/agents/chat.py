@@ -138,6 +138,16 @@ def _history_key(user_id: str, session_id: str) -> str:
     return f"{_CHAT_KEY_PREFIX}{user_id}:{session_id}"
 
 
+def _resolve_status(status: Any) -> str:
+    """将订单状态码转为中文。"""
+    if status is None:
+        return "未知"
+    return {
+        1: "待付款", 2: "待接单", 3: "已接单",
+        4: "派送中", 5: "已完成", 6: "已取消",
+    }.get(status, "未知")
+
+
 class ChatAgent:
     """苍穹外卖智能客服。
 
@@ -168,6 +178,25 @@ class ChatAgent:
         )
 
     # -- 记忆读写 ----------------------------------------------------------
+
+    def _build_system_prompt(self, context: Optional[dict[str, Any]]) -> str:
+        """构造带上下文的 system prompt。"""
+        parts = [self.system_prompt]
+        if context:
+            orders = context.get("recentOrders")
+            if orders and isinstance(orders, list):
+                parts.append("\n\n该用户最近的订单信息：")
+                for o in orders[:3]:
+                    parts.append(
+                        f"- 订单号：{o.get('number', '?')}，"
+                        f"状态：{_resolve_status(o.get('status'))}，"
+                        f"金额：{o.get('amount', '?')}，"
+                        f"下单时间：{o.get('order_time', '?')}"
+                    )
+            shop_status = context.get("shopStatus")
+            if shop_status:
+                parts.append(f"\n当前店铺状态：{shop_status}")
+        return "".join(parts)
 
     def _load_history(self, user_id: str, session_id: str) -> list[BaseMessage]:
         if not self.redis:
@@ -210,7 +239,8 @@ class ChatAgent:
     # -- 核心对话 ----------------------------------------------------------
 
     async def chat(
-        self, user_id: str, message: str, session_id: Optional[str] = None
+        self, user_id: str, message: str, session_id: Optional[str] = None,
+        context: Optional[dict[str, Any]] = None,
     ) -> dict[str, str]:
         """执行一轮对话。
 
@@ -221,9 +251,10 @@ class ChatAgent:
         if not session_id:
             session_id = uuid.uuid4().hex[:16]
 
-        # 2. 装配消息
+        # 2. 装配消息（注入上下文）
         history = self._load_history(user_id, session_id)
-        messages: list[BaseMessage] = [SystemMessage(content=self.system_prompt)]
+        system_content = self._build_system_prompt(context)
+        messages: list[BaseMessage] = [SystemMessage(content=system_content)]
         messages.extend(history)
         messages.append(HumanMessage(content=message))
 

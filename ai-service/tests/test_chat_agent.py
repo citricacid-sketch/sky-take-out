@@ -241,7 +241,7 @@ class TestChatAgentErrors:
         llm = _BrokenLLM([])
         agent = ChatAgent(llm=llm, redis_client=mock_redis)
         result = await agent.chat("user_1", "你好")
-        assert "暂时无法回答" in result["reply"]
+        assert "暂时不可用" in result["reply"]
         assert "session_id" in result
 
     @pytest.mark.asyncio

@@ -155,9 +155,14 @@ class TestPlanDbError:
 class TestRouterIntegration:
     """路由集成测试：通过 TestClient 调用 /api/v1/order/plan。"""
 
-    def test_endpoint_returns_200(self, client):
+    @pytest.fixture
+    def auth_headers(self):
+        from app.config import settings
+        return {"X-Internal-Token": settings.ai_service_token or "test_token"}
+
+    def test_endpoint_returns_200(self, client, auth_headers):
         with _mock_db(FAKE_DISHES):
-            r = client.post("/api/v1/order/plan", json={"people": 2, "budget": 100, "tastes": ["spicy"]})
+            r = client.post("/api/v1/order/plan", json={"people": 2, "budget": 100, "tastes": ["spicy"]}, headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert "items" in body

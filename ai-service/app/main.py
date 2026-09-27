@@ -23,10 +23,17 @@ async def lifespan(app: FastAPI):
         settings.llm_base_url,
         settings.ai_service_port,
     )
+    # 启动校验
+    warnings = []
     if not settings.llm_api_key:
-        logger.warning("LLM_API_KEY 未设置, LLM 调用将失败")
+        warnings.append("LLM_API_KEY 未设置")
     if not settings.ai_service_token:
-        logger.warning("AI_SERVICE_TOKEN 未设置, 内部认证已关闭 (应确保服务仅绑定 localhost)")
+        warnings.append("AI_SERVICE_TOKEN 未设置 (开发模式)")
+    if warnings:
+        for w in warnings:
+            logger.warning(w)
+    else:
+        logger.info("配置校验通过")
     yield
 
 
