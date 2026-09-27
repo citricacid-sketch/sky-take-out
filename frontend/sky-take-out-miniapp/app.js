@@ -4,6 +4,7 @@
 const auth = require('./services/auth.js');
 const http = require('./services/request.js');
 const cart = require('./services/cart.js');
+const network = require('./utils/network.js');
 
 App({
   globalData: {
@@ -14,6 +15,8 @@ App({
   },
 
   onLaunch() {
+    // 初始化网络监听
+    network.initNetworkListener();
     // Best-effort: read cached token + fetch shop status for the homepage.
     this.globalData.userInfo = auth.isLoggedIn() ? { token: auth.getToken() } : null;
     this.fetchShopStatus();

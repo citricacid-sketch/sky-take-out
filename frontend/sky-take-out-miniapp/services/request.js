@@ -4,6 +4,8 @@
 // - Automatic `authentication` header injection
 // - Business error (code !== 1) normalization
 // - 401 handling: clear token and force redirect to login page
+// - Retry on network failure (configurable)
+// - Timeout & offline detection
 
 const config = require('../config/index.js');
 
@@ -19,11 +21,32 @@ function clearRequestToken() {
   currentToken = '';
 }
 
+function getStoredToken() {
+  // Prefer module-level cache (set by auth.login via setToken) to avoid
+  // storage/globalData cross-VM issues in the mini program runtime.
+  if (currentToken) return currentToken;
+  return wx.getStorageSync('token') || '';
+}
+
+/**
+ * 核心请求函数。
+ * @param {object} options
+ * @param {number} options.retries 网络失败重试次数（默认 1）
+ * @param {number} options.timeout 超时毫秒（默认 15000）
+ * @param {boolean} options.silent 是否抑制 toast
+ */
 function request(options) {
-  const { url, method = 'GET', data, header = {}, silent, token: explicitToken } = options;
-  // Explicit token (passed from 401 retry) takes precedence over stored token.
-  // `silent` only controls toast suppression — it must NOT strip the token,
-  // otherwise authenticated requests (e.g. cart/category) would always 401.
+  const {
+    url,
+    method = 'GET',
+    data,
+    header = {},
+    silent,
+    token: explicitToken,
+    retries = 1,
+    timeout = 15000,
+  } = options;
+
   const token = explicitToken || getStoredToken() || '';
 
   const isAbsolute = /^https?:\/\//i.test(url);
@@ -35,48 +58,81 @@ function request(options) {
   }
 
   return new Promise((resolve, reject) => {
-    wx.request({
-      url: fullUrl,
-      method,
-      data,
-      header: {
-        'content-type': 'application/json',
-        ...(token ? { authentication: token } : {}),
-        ...header,
-      },
-      success(res) {
-        const { statusCode, data: body } = res;
+    let attempts = 0;
 
-        // Backend returns HTTP 401 with an empty body when JWT is missing/invalid.
-        if (statusCode === config.UNAUTHORIZED_STATUS) {
-          handleUnauthorized().then(
-            () => reject({ type: 'unauthorized' }),
-            () => reject({ type: 'unauthorized' })
-          );
-          return;
-        }
+    function doRequest() {
+      attempts += 1;
 
-        if (statusCode >= 200 && statusCode < 300) {
-          if (body && body.code === config.SUCCESS_CODE) {
-            resolve(body.data);
-          } else {
-            // Business failure: code 0 or unexpected shape.
-            const message = (body && body.msg) || '请求失败';
-            if (!silent) wx.showToast({ title: message, icon: 'none' });
-            reject({ type: 'business', message, body });
+      const requestTask = wx.request({
+        url: fullUrl,
+        method,
+        data,
+        header: {
+          'content-type': 'application/json',
+          ...(token ? { authentication: token } : {}),
+          ...header,
+        },
+        timeout,
+        success(res) {
+          const { statusCode, data: body } = res;
+
+          // Backend returns HTTP 401 with an empty body when JWT is missing/invalid.
+          if (statusCode === config.UNAUTHORIZED_STATUS) {
+            handleUnauthorized().then(
+              () => reject({ type: 'unauthorized' }),
+              () => reject({ type: 'unauthorized' })
+            );
+            return;
           }
-        } else {
-          const message = `网络错误 (${statusCode})`;
-          if (!silent) wx.showToast({ title: message, icon: 'none' });
-          reject({ type: 'http', statusCode, message });
-        }
-      },
-      fail(err) {
-        const message = '网络异常，请检查网络';
-        if (!silent) wx.showToast({ title: message, icon: 'none' });
-        reject({ type: 'network', message, err });
-      },
-    });
+
+          if (statusCode >= 200 && statusCode < 300) {
+            if (body && body.code === config.SUCCESS_CODE) {
+              resolve(body.data);
+            } else {
+              // Business failure: code 0 or unexpected shape.
+              const message = (body && body.msg) || '请求失败';
+              if (!silent) wx.showToast({ title: message, icon: 'none', duration: 2000 });
+              reject({ type: 'business', message, body });
+            }
+          } else {
+            const message = `服务繁忙 (${statusCode})`;
+            if (!silent) wx.showToast({ title: message, icon: 'none', duration: 2000 });
+            reject({ type: 'http', statusCode, message });
+          }
+        },
+        fail(err) {
+          const isNetworkError = !err.errMsg || err.errMsg.includes('timeout') || err.errMsg.includes('connect');
+          const canRetry = isNetworkError && attempts <= retries;
+
+          if (canRetry) {
+            // 指数退避重试：500ms, 1000ms, 2000ms...
+            const delay = Math.min(500 * Math.pow(2, attempts - 1), 3000);
+            if (!silent) wx.showLoading({ title: `重试中 (${attempts}/${retries + 1})...`, mask: false });
+            setTimeout(() => {
+              wx.hideLoading();
+              doRequest();
+            }, delay);
+            return;
+          }
+
+          // 最终失败
+          const message = isNetworkError ? '网络不稳定，请检查网络后重试' : '请求失败';
+          if (!silent) wx.showToast({ title: message, icon: 'none', duration: 2000 });
+          reject({ type: 'network', message, err, attempts });
+        },
+      });
+
+      // 超时处理（wx.request timeout 在某些基础库版本不生效，做兜底）
+      if (timeout > 0) {
+        setTimeout(() => {
+          if (requestTask && requestTask.abort) {
+            requestTask.abort();
+          }
+        }, timeout + 2000);
+      }
+    }
+
+    doRequest();
   });
 }
 
@@ -97,13 +153,6 @@ function handleUnauthorized() {
 
     resolve();
   });
-}
-
-function getStoredToken() {
-  // Prefer module-level cache (set by auth.login via setToken) to avoid
-  // storage/globalData cross-VM issues in the mini program runtime.
-  if (currentToken) return currentToken;
-  return wx.getStorageSync('token') || '';
 }
 
 // Convenience helpers
