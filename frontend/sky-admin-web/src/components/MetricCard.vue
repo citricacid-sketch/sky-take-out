@@ -1,11 +1,27 @@
+<!--
+ * MetricCard 指标卡片组件
+ * 功能：展示单个核心业务指标（如营业额、订单数、完成率、用户数）
+ * 特性：
+ *   - 四种色调（tone）可选：warm(暖橙)、green(绿)、blue(蓝)、red(红)
+ *   - 可选趋势百分比显示（上升/下降箭头 + 百分比）
+ *   - 悬停时上浮 + 顶部渐变色条动画
+ * 色调说明：
+ *   - warm  (暖橙色 #D97706)：用于营业额等收益类指标
+ *   - green (绿色   #059669)：用于有效订单等正向指标
+ *   - blue  (蓝色   #3B82F6)：用于完成率等中性指标
+ *   - red   (红色   #DC2626)：用于新增用户等警示类指标
+ */
 <template>
   <div class="metric-card" :class="`tone-${color}`">
+    <!-- 图标区域：带色调背景的圆角方块 -->
     <div class="metric-icon">
       <el-icon :size="22"><component :is="icon" /></el-icon>
     </div>
+    <!-- 内容区域：标签 + 数值 + 趋势 -->
     <div class="metric-body">
       <div class="metric-label">{{ label }}</div>
       <div class="metric-value">{{ value }}</div>
+      <!-- 趋势显示：仅在 trend 不为 undefined 且不为 0 时渲染 -->
       <div v-if="trend !== undefined && trend !== 0" class="metric-trend" :class="trend > 0 ? 'up' : 'down'">
         <el-icon :size="12"><CaretTop v-if="trend > 0" /><CaretBottom v-else /></el-icon>
         <span>{{ Math.abs(trend) }}%</span>
@@ -18,10 +34,15 @@
 import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
 
 defineProps({
+  /** 指标标签，如"营业额""有效订单" */
   label: { type: String, required: true },
+  /** 指标数值，支持字符串或数字 */
   value: { type: [String, Number], required: true },
+  /** 图标组件名或对象，由父组件传入 */
   icon: { type: [String, Object], required: true },
+  /** 色调主题：warm / green / blue / red，默认 blue */
   color: { type: String, default: 'blue' },
+  /** 趋势百分比，正数为上升，负数为下降，不传则不显示 */
   trend: { type: Number, default: undefined },
 })
 </script>

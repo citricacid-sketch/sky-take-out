@@ -1,3 +1,13 @@
+<!--
+ * 工作台仪表盘页面
+ * 功能：展示商家核心营业数据、订单分布、商品/套餐总览、订单状态统计
+ * 布局：顶部时间筛选 → 指标卡片（4 列）→ 订单分布 + 商品总览图表 → 套餐总览 + 数据概览
+ * 图表说明：
+ *   - 订单分布：环形饼图，展示待接单/待派送/已完成/已取消订单占比
+ *   - 商品总览：环形饼图，展示已启售/已停售商品数量占比
+ *   - 套餐总览：环形饼图，展示已启售/已停售套餐数量占比
+ *   - 数据概览：纯数字网格，展示各状态订单的绝对数量
+ -->
 <template>
   <div class="dashboard">
     <!-- 顶部：标题 + 时间筛选 -->
@@ -7,6 +17,7 @@
         <p class="dash-sub">欢迎回来，{{ todayLabel }}</p>
       </div>
       <div class="dash-controls">
+        <!-- 时间范围切换：今日 / 本周 / 本月，切换后重新拉取营业数据 -->
         <el-radio-group v-model="range" size="small" @change="onRangeChange">
           <el-radio-button label="today">今日</el-radio-button>
           <el-radio-button label="week">本周</el-radio-button>
@@ -22,6 +33,7 @@
 
     <!-- 核心指标卡片 -->
     <section v-else class="data-cards">
+      <!-- 营业额卡片：暖色调（橙色），带环比趋势 -->
       <MetricCard
         label="营业额"
         :value="formatMoney(businessData.turnover)"
@@ -29,6 +41,7 @@
         color="warm"
         :trend="trends.turnover"
       />
+      <!-- 有效订单卡片：绿色调，带环比趋势 -->
       <MetricCard
         label="有效订单"
         :value="businessData.validOrderCount || 0"
@@ -36,12 +49,14 @@
         color="green"
         :trend="trends.orders"
       />
+      <!-- 订单完成率卡片：蓝色调 -->
       <MetricCard
         label="订单完成率"
         :value="formatRate(businessData.orderCompletionRate)"
         icon="TrendCharts"
         color="blue"
       />
+      <!-- 新增用户卡片：红色调 -->
       <MetricCard
         label="新增用户"
         :value="businessData.newUsers || 0"
@@ -53,11 +68,13 @@
     <!-- 图表 + 热销榜 -->
     <section class="charts-row">
       <div class="chart-main">
+        <!-- 订单分布：环形饼图，展示各状态订单占比 -->
         <ChartCard title="订单分布" :loading="chartLoading">
           <div ref="orderChartRef" class="chart-dom"></div>
         </ChartCard>
       </div>
       <div class="chart-side">
+        <!-- 商品总览：环形饼图，展示启售/停售商品数量 -->
         <ChartCard title="商品总览" :loading="chartLoading">
           <div ref="dishChartRef" class="chart-dom"></div>
         </ChartCard>
@@ -67,11 +84,13 @@
     <!-- 套餐总览 -->
     <section class="charts-row">
       <div class="chart-col">
+        <!-- 套餐总览：环形饼图，展示启售/停售套餐数量 -->
         <ChartCard title="套餐总览" :loading="chartLoading">
           <div ref="setmealChartRef" class="chart-dom"></div>
         </ChartCard>
       </div>
       <div class="chart-col">
+        <!-- 数据概览：纯数字网格，展示各状态订单绝对数量 -->
         <ChartCard title="数据概览" :loading="chartLoading">
           <div class="stats-grid">
             <div class="stat-item">
@@ -119,6 +138,10 @@ const setmealOverview = ref({})
 
 const trends = ref({ orders: 0, turnover: 0 })
 
+/**
+ * 计算今日日期标签，格式：X月X日 周X
+ * @returns {string} 格式化后的日期字符串
+ */
 const todayLabel = computed(() => {
   const d = new Date()
   const w = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]
@@ -132,14 +155,28 @@ let orderChart = null
 let dishChart = null
 let setmealChart = null
 
+/**
+ * 格式化金额为人民币格式
+ * @param {number} v - 金额数值
+ * @returns {string} 格式化后的金额字符串，如 ¥123.45
+ */
 function formatMoney(v) {
   const n = Number(v) || 0
   return '¥' + n.toFixed(2)
 }
+
+/**
+ * 格式化比率为百分比
+ * @param {number} v - 比率数值（0~1）
+ * @returns {string} 格式化后的百分比字符串，如 95.5%
+ */
 function formatRate(v) {
   return ((Number(v) || 0) * 100).toFixed(1) + '%'
 }
 
+/**
+ * 获取营业数据（营业额、有效订单、完成率、新增用户）
+ */
 async function fetchBusinessData() {
   try {
     businessData.value = await getBusinessData()
@@ -148,6 +185,9 @@ async function fetchBusinessData() {
   }
 }
 
+/**
+ * 获取订单/商品/套餐概览数据（并行请求）
+ */
 async function fetchOverviewData() {
   try {
     const [order, dish, setmeal] = await Promise.all([
@@ -163,10 +203,17 @@ async function fetchOverviewData() {
   }
 }
 
+/**
+ * 时间范围切换回调：重新拉取营业数据
+ */
 function onRangeChange() {
   fetchBusinessData()
 }
 
+/**
+ * 渲染订单分布环形饼图
+ * 图表用途：展示待接单/待派送/已完成/已取消订单的数量占比
+ */
 function renderOrderChart() {
   if (!orderChartRef.value) return
   orderChart = echarts.init(orderChartRef.value)
@@ -204,6 +251,10 @@ function renderOrderChart() {
   })
 }
 
+/**
+ * 渲染商品总览环形饼图
+ * 图表用途：展示已启售/已停售商品的数量占比
+ */
 function renderDishChart() {
   if (!dishChartRef.value) return
   dishChart = echarts.init(dishChartRef.value)
@@ -236,6 +287,10 @@ function renderDishChart() {
   })
 }
 
+/**
+ * 渲染套餐总览环形饼图
+ * 图表用途：展示已启售/已停售套餐的数量占比
+ */
 function renderSetmealChart() {
   if (!setmealChartRef.value) return
   setmealChart = echarts.init(setmealChartRef.value)
@@ -268,6 +323,9 @@ function renderSetmealChart() {
   })
 }
 
+/**
+ * 窗口尺寸变化时，重新计算三个图表的布局尺寸
+ */
 function handleResize() {
   orderChart?.resize()
   dishChart?.resize()
@@ -279,14 +337,17 @@ onMounted(async () => {
   loading.value = false
   chartLoading.value = false
   await nextTick()
+  // 初始渲染三个图表
   renderOrderChart()
   renderDishChart()
   renderSetmealChart()
+  // 监听窗口 resize 事件，自适应图表尺寸
   window.addEventListener('resize', handleResize)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
+  // 销毁三个 echarts 实例，释放资源
   orderChart?.dispose()
   dishChart?.dispose()
   setmealChart?.dispose()
