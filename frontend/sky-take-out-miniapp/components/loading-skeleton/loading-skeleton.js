@@ -1,6 +1,23 @@
-// components/loading-skeleton/loading-skeleton.js
+/**
+ * 加载骨架屏组件 (LoadingSkeleton)
+ *
+ * 功能：在数据加载期间，用灰色的占位块模拟内容的大致轮廓，
+ * 减少用户感知的等待时间，提升体验流畅度。
+ *
+ * 典型使用场景：
+ *   - 商品列表初次加载
+ *   - 订单详情页拉取数据
+ *   - 首页推荐区域异步渲染前
+ *
+ * 可配置属性：
+ *   - titleWidth: 标题占位块的宽度百分比，默认 40（即 40%）
+ *
+ * 注意：本组件的样式与结构在 skeleton.wxml / skeleton.wxss 中定义，
+ * 此处仅声明可外部传入的属性。
+ */
 Component({
   properties: {
+    /** 标题占位块宽度（百分比数值，不带单位），默认 40 */
     titleWidth: { type: Number, value: 40 },
   },
 });
