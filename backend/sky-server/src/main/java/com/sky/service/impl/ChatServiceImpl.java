@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.sky.client.AiServiceClient;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.service.ChatService;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,12 +45,34 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired(required = false)
+    private AiServiceClient aiServiceClient;
+
     @Override
     public String chat(Long userId, String message) {
         if (message == null || message.trim().isEmpty()) {
             return "请输入您的问题，我来为您解答。";
         }
 
+        // 优先走 Python AI 服务 (双跑开关)
+        if (aiServiceClient != null && aiServiceClient.isPythonProvider()) {
+            String traceId = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+            String pythonReply = aiServiceClient.chat(String.valueOf(userId), message, traceId);
+            if (pythonReply != null && !pythonReply.isEmpty()) {
+                return pythonReply;
+            }
+            // Python 不可用 → 降级到 Java 实现
+            log.warn("Python AI 服务不可用，降级到 Java 实现 (traceId={})", traceId);
+        }
+
+        // Java 实现 (原逻辑)
+        return chatWithJava(userId, message);
+    }
+
+    /**
+     * Java 端 LLM 实现 (原 chat 逻辑)。
+     */
+    private String chatWithJava(Long userId, String message) {
         // 1. 取历史消息
         List<Map<String, String>> history = getHistory(userId);
 

@@ -1,6 +1,7 @@
 package com.sky.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.sky.client.AiServiceClient;
 import com.sky.properties.LlmProperties;
 import com.sky.service.AIAssistantService;
 import com.sky.service.DataQueryService;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,12 +76,33 @@ public class AIAssistantServiceImpl implements AIAssistantService {
     @Autowired
     private LlmClient llmClient;
 
+    @Autowired(required = false)
+    private AiServiceClient aiServiceClient;
+
     @Override
     public String ask(String question) {
         if (question == null || question.trim().isEmpty()) {
             return "请输入您的问题。";
         }
 
+        // 优先走 Python AI 服务 (双跑开关)
+        if (aiServiceClient != null && aiServiceClient.isPythonProvider()) {
+            String traceId = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+            String pythonAnswer = aiServiceClient.analysisAsk(question, traceId);
+            if (pythonAnswer != null && !pythonAnswer.isEmpty()) {
+                return pythonAnswer;
+            }
+            log.warn("Python AI 分析服务不可用，降级到 Java 实现 (traceId={})", traceId);
+        }
+
+        // Java 实现 (原逻辑)
+        return askWithJava(question);
+    }
+
+    /**
+     * Java 端 LLM 分析实现 (原 ask 逻辑)。
+     */
+    private String askWithJava(String question) {
         try {
             // 第一步：让 LLM 生成 SQL
             String sql = generateSql(question);
