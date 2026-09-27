@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 public class AiServiceProperties {
 
     /**
-     * AI 服务提供方: java (默认) / python
+     * AI 服务提供方: python (默认) / java
      */
-    private String provider = "java";
+    private String provider = "python";
 
     /**
      * Python AI 服务地址

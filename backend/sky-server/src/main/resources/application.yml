@@ -71,8 +71,8 @@ sky:
     shop-address: ${sky.baidu.shop-address}
   ai:
     service:
-      # AI 服务提供方: java (默认) / python — 双跑开关
-      provider: ${AI_PROVIDER:java}
+      # AI 服务提供方: python (默认)
+      provider: ${AI_PROVIDER:python}
       # Python AI 服务地址
       url: ${AI_SERVICE_URL:http://127.0.0.1:8000}
       # 内部认证令牌（与 Python AI_SERVICE_TOKEN 保持一致）

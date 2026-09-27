@@ -231,8 +231,8 @@ class ChatAgent:
         try:
             reply = await self._tool_loop(messages)
         except Exception as e:  # noqa: BLE001
-            logger.exception("LLM 调用失败")
-            reply = "抱歉，我暂时无法回答您的问题，请稍后再试。"
+            logger.exception("LLM 调用失败: %s", e)
+            reply = f"抱歉，AI 服务暂时不可用 ({type(e).__name__})"
             messages.append(AIMessage(content=reply))
 
         # 4. 更新记忆
