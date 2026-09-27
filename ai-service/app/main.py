@@ -17,8 +17,10 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.security_utils import SECURITY_HEADERS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,6 +58,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Sky Take-Out AI Service", version="1.0.0", lifespan=lifespan)
+
+# 安全响应头中间件
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    """为所有响应添加安全头。"""
+    response = await call_next(request)
+    for key, value in SECURITY_HEADERS.items():
+        response.headers[key] = value
+    return response
 
 # 路由注册
 from app.routers import router  # noqa: E402

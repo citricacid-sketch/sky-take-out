@@ -17,6 +17,7 @@ from app.agents.chat import chat_agent
 from app.agents.data_analysis import analyze as analyze_fn
 from app.agents.order_planner import plan as order_planner_plan
 from app.security import verify_internal_token
+from app.security_utils import sanitize_input, validate_token_format
 from app.middleware.rate_limit import ai_rate_limiter
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,16 @@ class ChatRequest(BaseModel):
     sessionId: Optional[str] = None  # 会话 ID（首次为空，后续复用）
     context: Optional[dict[str, Any]] = None  # 用户上下文（订单/店铺状态）
 
+    @pydantic.field_validator("message")
+    @classmethod
+    def message_not_empty(cls, v: str) -> str:
+        """校验 message 不为空且长度合理。"""
+        if not v or not v.strip():
+            raise ValueError("message 不能为空")
+        if len(v) > 500:
+            raise ValueError("message 不能超过 500 字符")
+        return v.strip()
+
 
 class AnalysisRequest(BaseModel):
     """NL2SQL 数据分析请求。"""
@@ -38,10 +49,12 @@ class AnalysisRequest(BaseModel):
     @pydantic.field_validator("question")
     @classmethod
     def question_not_empty(cls, v: str) -> str:
-        """校验 question 不为空。"""
+        """校验 question 不为空且长度合理。"""
         if not v or not v.strip():
             raise ValueError("question 不能为空")
-        return v
+        if len(v) > 200:
+            raise ValueError("question 不能超过 200 字符")
+        return v.strip()
 
 
 class OrderPlanRequest(BaseModel):
@@ -50,6 +63,22 @@ class OrderPlanRequest(BaseModel):
     budget: float = 0  # 预算（0=不限）
     tastes: list[str] = []  # 口味偏好
     excludes: list[str] = []  # 忌口食材
+
+    @pydantic.field_validator("people")
+    @classmethod
+    def people_valid(cls, v: int) -> int:
+        """校验人数在合理范围（1-20）。"""
+        if v < 1 or v > 20:
+            raise ValueError("人数需在 1-20 之间")
+        return v
+
+    @pydantic.field_validator("budget")
+    @classmethod
+    def budget_valid(cls, v: float) -> float:
+        """校验预算非负。"""
+        if v < 0:
+            raise ValueError("预算不能为负数")
+        return v
 
 
 @router.get("/api/v1/health")
