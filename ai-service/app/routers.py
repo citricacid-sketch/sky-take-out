@@ -1,4 +1,8 @@
-"""AI 服务 API 路由。"""
+"""AI 服务 API 路由。
+
+所有 POST 端点需要 X-Internal-Token 认证（除了 health/ready）。
+请求/响应格式与 Java AiServiceClient 对应。
+"""
 
 from __future__ import annotations
 
@@ -19,33 +23,37 @@ router = APIRouter()
 
 
 class ChatRequest(BaseModel):
+    """客服对话请求。"""
     userId: str
     message: str
-    sessionId: Optional[str] = None
-    context: Optional[dict[str, Any]] = None
+    sessionId: Optional[str] = None  # 会话 ID（首次为空，后续复用）
+    context: Optional[dict[str, Any]] = None  # 用户上下文（订单/店铺状态）
 
 
 class AnalysisRequest(BaseModel):
+    """NL2SQL 数据分析请求。"""
     question: str
 
     @pydantic.field_validator("question")
     @classmethod
     def question_not_empty(cls, v: str) -> str:
+        """校验 question 不为空。"""
         if not v or not v.strip():
             raise ValueError("question 不能为空")
         return v
 
 
 class OrderPlanRequest(BaseModel):
-    people: int = 1
-    budget: float = 0
-    tastes: list[str] = []
-    excludes: list[str] = []
+    """点餐推荐请求。"""
+    people: int = 1  # 人数
+    budget: float = 0  # 预算（0=不限）
+    tastes: list[str] = []  # 口味偏好
+    excludes: list[str] = []  # 忌口食材
 
 
 @router.get("/api/v1/health")
 async def health() -> dict[str, Any]:
-    """健康检查 (无需认证)。"""
+    """健康检查（无需认证）。"""
     return {"status": "ok", "service": "ai-service"}
 
 
@@ -71,7 +79,7 @@ async def chat(payload: ChatRequest) -> dict[str, Any]:
 
 @router.post("/api/v1/analysis/ask", dependencies=[Depends(verify_internal_token)])
 async def analysis_ask(payload: AnalysisRequest) -> dict[str, Any]:
-    """NL2SQL 数据分析 (DataAnalysisAgent)。"""
+    """NL2SQL 数据分析（DataAnalysisAgent）。"""
     return await analyze_fn(payload.question)
 
 
@@ -79,5 +87,5 @@ async def analysis_ask(payload: AnalysisRequest) -> dict[str, Any]:
 
 @router.post("/api/v1/order/plan", dependencies=[Depends(verify_internal_token)])
 async def order_plan(payload: OrderPlanRequest) -> dict[str, Any]:
-    """点餐推荐 (OrderPlannerAgent)。"""
+    """点餐推荐（OrderPlannerAgent）。"""
     return await order_planner_plan(payload.people, payload.budget, payload.tastes, payload.excludes)

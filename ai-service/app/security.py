@@ -1,4 +1,14 @@
-"""内部服务认证 (支持 Authorization 或 X-Internal-Token, HMAC)。"""
+"""内部服务认证中间件。
+
+支持两种 header 格式（兼容不同调用方）：
+- Authorization: <token>（标准）
+- X-Internal-Token: <token>（Java 端使用）
+
+安全特性：
+- HMAC 比较（防时序攻击）
+- 开发模式自动放行（AI_SERVICE_TOKEN 未设置时）
+- 缺失/无效 token 返回标准 HTTP 状态码（401/403）
+"""
 
 import hmac
 import logging
@@ -17,16 +27,20 @@ async def verify_internal_token(
 ) -> None:
     """校验 Java 端发来的内部令牌。
 
-    支持两种 header:
-    - Authorization: <token>
-    - X-Internal-Token: <token>
+    校验流程：
+    1. 开发模式（AI_SERVICE_TOKEN 未设置）→ 直接放行
+    2. 提取 token（优先 Authorization，兼容 X-Internal-Token）
+    3. 缺失 → 401 Unauthorized
+    4. 不匹配 → 403 Forbidden
 
-    开发模式 (AI_SERVICE_TOKEN 未设置) 时跳过校验，但应确保服务仅绑定 localhost。
+    Raises:
+        HTTPException: 401（缺失）或 403（无效）
     """
+    # 开发模式：不校验
     if not settings.ai_service_token:
-        return  # 开发模式：不校验
+        return
 
-    # 取 token (优先 Authorization，兼容 X-Internal-Token)
+    # 取 token（优先 Authorization，兼容 X-Internal-Token）
     token = authorization or x_internal_token
 
     if not token:
@@ -36,6 +50,7 @@ async def verify_internal_token(
             detail={"error": "missing_token", "message": "缺少 X-Internal-Token"},
         )
 
+    # HMAC 比较（防时序攻击）
     if not hmac.compare_digest(token, settings.ai_service_token):
         logger.warning("内部令牌校验失败")
         raise HTTPException(
