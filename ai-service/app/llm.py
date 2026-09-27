@@ -2,7 +2,7 @@
 
 提供两个模型实例：
 - chat_llm: 客服对话 + 总结 (temperature=0.7)
-- sql_llm: SQL 生成 (temperature=0.1, 更低温度提高确定性)
+- sql_llm:   SQL 生成 (temperature=0.1, 更低温度提高确定性)
 """
 
 import logging

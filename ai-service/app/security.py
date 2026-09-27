@@ -1,4 +1,4 @@
-"""内部服务认证中间件 (X-Internal-Token)。"""
+"""内部服务认证 (X-Internal-Token, HMAC)。"""
 
 import hmac
 import logging
@@ -17,8 +17,7 @@ async def verify_internal_token(authorization: Optional[str] = Header(default=No
     开发模式 (AI_SERVICE_TOKEN 未设置) 时跳过校验，但应确保服务仅绑定 localhost。
     """
     if not settings.ai_service_token:
-        # 开发模式：不校验，但记录警告
-        return
+        return  # 开发模式：不校验
 
     if not authorization:
         raise HTTPException(
